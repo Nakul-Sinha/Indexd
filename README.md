@@ -223,6 +223,7 @@ to a tolerable length, nothing above it is worth building.
 | Document | What it covers |
 |---|---|
 | [CONTEXT.md](CONTEXT.md) | Full project context. Read this before touching any code. |
+| [STACK.md](STACK.md) | Every technology decision, with the reason and the runner-up. |
 | [PHASES.md](PHASES.md) | Step-by-step phases for the whole project and for each engineer. |
 | [ENGINEER-1.md](ENGINEER-1.md) | AI and agent systems — authoring, MCP, CLI, telemetry, Director. |
 | [ENGINEER-2.md](ENGINEER-2.md) | Cloud and deployment infrastructure — the mechanism. |
