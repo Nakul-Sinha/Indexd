@@ -7,7 +7,13 @@ import {
   PRE_CUTOVER_STATES,
 } from "../src/deployment.ts";
 import { DRAFT_RATE_LIMIT, requiresApproval, TOOLS_BY_CLASS } from "../src/mcp-tools.ts";
-import { approvalRequired, isRefusal } from "../src/refusal.ts";
+import {
+  approvalRequired,
+  clusterApprovalRequired,
+  isRefusal,
+  notFound,
+  rateLimited,
+} from "../src/refusal.ts";
 
 describe("the invariant, encoded", () => {
   test("cutover and everything after it is not pre-cutover", () => {
@@ -133,5 +139,79 @@ describe("tool classes", () => {
     expect(TOOLS_BY_CLASS.draft.length).toBeGreaterThan(0);
     expect(DRAFT_RATE_LIMIT.calls).toBeGreaterThan(0);
     expect(DRAFT_RATE_LIMIT.window_seconds).toBeGreaterThan(0);
+  });
+});
+
+describe("refusal constructors", () => {
+  test("notFound produces the same shape everywhere it is used", () => {
+    const a = notFound({ tool: "get_server", resource: "server srv_a19" });
+    const b = notFound({ tool: "get_server", resource: "server srv_a19" });
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(a.error).toBe("not_found");
+    // Scoped reads are refused rather than returned empty, because an empty
+    // result and a forbidden one are distinguishable and that leaks existence.
+    expect(a.resolution).toContain("servers you own");
+  });
+
+  test("rateLimited is distinguishable from an approval refusal", () => {
+    const limited = rateLimited({
+      tool: "author_rules",
+      server_id: "srv_7f2",
+      limit: 10,
+      window_seconds: 3600,
+      retry_after_seconds: 42,
+    });
+    expect(limited.error).toBe("rate_limited");
+    // The correct next move differs: wait, rather than ask a human.
+    expect(limited.resolution).toContain("no human action is needed");
+    expect(limited.resolution).not.toContain("owner");
+  });
+
+  test("clusterApprovalRequired covers create_server, which has no server yet", () => {
+    const refusal = clusterApprovalRequired({
+      reason: "missing",
+      tool: "create_server",
+      server_id: null,
+      operation: "create_server",
+    });
+    expect(refusal.error).toBe("approval_required");
+    expect(refusal.server_id).toBeNull();
+    expect(refusal.message).not.toContain("null");
+  });
+
+  test("a cluster refusal says the operation is not undone by rollback", () => {
+    const refusal = clusterApprovalRequired({
+      reason: "missing",
+      tool: "power_action",
+      server_id: "srv_7f2",
+      operation: "stop",
+    });
+    expect(refusal.message).toContain("srv_7f2");
+    expect(refusal.resolution).toContain("not undone by a rule rollback");
+  });
+
+  test("every refusal constructor produces something isRefusal accepts", () => {
+    expect(isRefusal(notFound({ tool: "t", resource: "r" }))).toBe(true);
+    expect(
+      isRefusal(
+        rateLimited({
+          tool: "t",
+          server_id: "srv_7f2",
+          limit: 1,
+          window_seconds: 1,
+          retry_after_seconds: 1,
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      isRefusal(
+        clusterApprovalRequired({
+          reason: "expired",
+          tool: "t",
+          server_id: null,
+          operation: "create_server",
+        }),
+      ),
+    ).toBe(true);
   });
 });

@@ -748,6 +748,73 @@
       }
     }
   },
+  "ClusterApprovalRequiredRefusal": {
+    "$id": "ClusterApprovalRequiredRefusal",
+    "type": "object",
+    "required": [
+      "error",
+      "reason",
+      "tool",
+      "server_id",
+      "operation",
+      "message",
+      "resolution"
+    ],
+    "properties": {
+      "error": {
+        "const": "approval_required",
+        "type": "string"
+      },
+      "reason": {
+        "anyOf": [
+          {
+            "const": "missing",
+            "type": "string"
+          },
+          {
+            "const": "expired",
+            "type": "string"
+          },
+          {
+            "const": "consumed",
+            "type": "string"
+          },
+          {
+            "const": "principal_mismatch",
+            "type": "string"
+          },
+          {
+            "const": "digest_mismatch",
+            "type": "string"
+          }
+        ]
+      },
+      "tool": {
+        "type": "string"
+      },
+      "server_id": {
+        "anyOf": [
+          {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "operation": {
+        "description": "The cluster operation being refused",
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "resolution": {
+        "type": "string"
+      }
+    }
+  },
   "RateLimitedRefusal": {
     "$id": "RateLimitedRefusal",
     "type": "object",

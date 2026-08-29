@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "bun run src/stdio.ts",
+    "start:http": "bun run src/http.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
