@@ -18,3 +18,5 @@ target/
 
 *.log
 coverage/
+
+.claude/worktrees/
