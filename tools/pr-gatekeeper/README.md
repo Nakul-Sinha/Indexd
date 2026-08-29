@@ -72,16 +72,26 @@ Resolved conflicts are pushed back by refspec, so the branch is never checked ou
 
 ## The audit
 
+Severity means one specific thing, and only one:
+
+| Severity | Meaning |
+|---|---|
+| `block` | The change breaks something: it removes a safety property, stores data the architecture says is never stored, or opens a path an attacker can reach. Merging it makes the codebase wrong. |
+| `warn` | The change is fine and could be tidier. Reported so somebody sees it, never a reason to refuse a merge. |
+
 | Check | Severity | Rule it enforces |
 |---|---|---|
-| `em_dash` | block | House style |
-| `authorship_note` | block | No assistant trailers in the tree |
 | `java_generation` | block | The model emits validated JSON, never Java |
 | `raw_event_storage` | block | Raw world events grow without bound and nothing reads them |
 | `validation_bypass` | block | The validator is the only path from a rule document to a build |
 | `auto_approval` | block | Any auto-approving rule class is one a player can reach through injection |
+| `em_dash` | warn | House style |
+| `authorship_note` | warn | No assistant trailers in the tree |
 | `vocabulary_widened` | warn | Widening the action space is a reviewed security change |
 | `no_tests` | warn | Source landed without tests |
+
+A gate that blocks on punctuation trains people to override it, and an overridden gate stops
+catching the things that actually matter. So only the four invariant checks can refuse a merge.
 
 Only added lines are audited, comments are stripped before matching, and test files are exempt
 from the identifier checks. A test asserting a bypass is absent has to name the bypass.

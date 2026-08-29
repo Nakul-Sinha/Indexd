@@ -8,6 +8,19 @@
  * Each check encodes a rule this project already states somewhere in prose. The
  * value is not that a machine can read prose; it is that a rule nobody can
  * forget to apply is worth more than a rule everybody agrees with.
+ *
+ * Severity means one specific thing here, and only one:
+ *
+ *   block  The change breaks something. It removes a safety property, stores
+ *          data the architecture says is never stored, or opens a path an
+ *          attacker can reach. Merging it makes the codebase wrong.
+ *   warn   The change is fine and could be tidier. Style, conventions, missing
+ *          tests. Reported so somebody sees it, never a reason to refuse a
+ *          merge.
+ *
+ * The four invariant checks block. Everything else warns. A gate that blocks on
+ * punctuation trains people to override it, and an overridden gate stops
+ * catching the things that actually matter.
  */
 
 export interface Finding {
@@ -67,13 +80,19 @@ function isText(file: string): boolean {
   return TEXT_EXTENSIONS.some((extension) => file.endsWith(extension));
 }
 
-/** House style: em dashes are not used anywhere in this repository. */
+/**
+ * House style: em dashes are not used anywhere in this repository.
+ *
+ * A warning, not a block. It is punctuation, and it breaks nothing. A gate that
+ * refuses to merge working code over a typographic preference is a gate people
+ * learn to route around, and that costs far more than inconsistent dashes.
+ */
 export function checkEmDashes(added: readonly AddedLine[]): Finding[] {
   return added
     .filter((entry) => isText(entry.file) && entry.text.includes("—"))
     .map((entry) => ({
       code: "em_dash",
-      severity: "block" as const,
+      severity: "warn" as const,
       file: entry.file,
       line: entry.line,
       message:
@@ -88,13 +107,18 @@ const AUTHORSHIP_PATTERNS = [
   /\bas an ai\b/i,
 ];
 
-/** Authorship notes and assistant trailers do not belong in the tree. */
+/**
+ * Authorship notes and assistant trailers do not belong in the tree.
+ *
+ * Also a warning. It is a repository convention rather than a correctness
+ * problem, and it is trivially fixed in a follow up commit.
+ */
 export function checkAuthorshipNotes(added: readonly AddedLine[]): Finding[] {
   return added
     .filter((entry) => AUTHORSHIP_PATTERNS.some((pattern) => pattern.test(entry.text)))
     .map((entry) => ({
       code: "authorship_note",
-      severity: "block" as const,
+      severity: "warn" as const,
       file: entry.file,
       line: entry.line,
       message: "Authorship note or assistant trailer in an added line. Remove it.",

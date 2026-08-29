@@ -48,18 +48,22 @@ describe("addedLines", () => {
 });
 
 describe("style checks", () => {
-  test("blocks an em dash in an added line", () => {
+  test("reports an em dash as a warning, never a block", () => {
+    // Punctuation breaks nothing. A gate that refuses working code over a
+    // typographic preference is one people learn to route around.
     const findings = checkEmDashes(addedLines(diff("+a sentence — with a dash")));
     expect(findings).toHaveLength(1);
-    expect(findings[0]?.severity).toBe("block");
+    expect(findings[0]?.severity).toBe("warn");
   });
 
   test("allows hyphens and en dashes", () => {
     expect(checkEmDashes(addedLines(diff("+well-formed and 1–2 range")))).toHaveLength(0);
   });
 
-  test("blocks authorship trailers and generated-by notes", () => {
-    expect(checkAuthorshipNotes(addedLines(diff("+Co-Authored-By: Someone")))).toHaveLength(1);
+  test("reports authorship trailers as warnings", () => {
+    const trailer = checkAuthorshipNotes(addedLines(diff("+Co-Authored-By: Someone")));
+    expect(trailer).toHaveLength(1);
+    expect(trailer[0]?.severity).toBe("warn");
     expect(
       checkAuthorshipNotes(addedLines(diff("+Generated with [Claude Code](https://x)"))),
     ).toHaveLength(1);
