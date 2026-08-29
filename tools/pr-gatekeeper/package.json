@@ -1,0 +1,11 @@
+{
+  "name": "@farlands/pr-gatekeeper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gate": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  }
+}
