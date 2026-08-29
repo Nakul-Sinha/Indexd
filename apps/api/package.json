@@ -8,6 +8,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@farlands/authoring": "workspace:*",
     "@farlands/contracts": "workspace:*",
     "elysia": "^1.4.30"
   }

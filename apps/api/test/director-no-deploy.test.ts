@@ -72,7 +72,7 @@ function importSpecifiers(): string[] {
 
 /** Everything the module is allowed to reach. Anything else is a new seam to review. */
 const ALLOWED_IMPORTS = [
-  "../../../../../packages/authoring/src/index.ts",
+  "@farlands/authoring",
   "../telemetry/index.ts",
   "./brief.ts",
   "./director.ts",

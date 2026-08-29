@@ -1,15 +1,5 @@
+import { AuthoringFailedError, authorRules, type RuleModel } from "@farlands/authoring";
 import type { Proposal, provisionalVocabulary } from "@farlands/contracts";
-// Relative because apps/api does not declare @farlands/authoring as a workspace
-// dependency, and adding one is a package.json and lockfile change that belongs
-// to whoever owns the manifest. The path points at the package's own entry
-// rather than into its internals: authorRules is the front door, and reaching
-// past it would be the private path into the registry that this module is
-// specifically not allowed to have.
-import {
-  AuthoringFailedError,
-  authorRules,
-  type RuleModel,
-} from "../../../../../packages/authoring/src/index.ts";
 import type { RollupStore } from "../telemetry/index.ts";
 import { BriefParseError, type ProposalBrief, parseBrief } from "./brief.ts";
 import type { ProposalModel } from "./model.ts";
