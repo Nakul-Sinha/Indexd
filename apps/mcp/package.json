@@ -1,0 +1,14 @@
+{
+  "name": "@farlands/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@farlands/contracts": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0"
+  }
+}
