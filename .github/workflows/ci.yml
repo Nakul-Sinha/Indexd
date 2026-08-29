@@ -35,8 +35,18 @@ jobs:
       # Seam 1, enforced mechanically. The MCP tool schemas are a serialization
       # of the contract types, so a drifted schema is a build failure rather than
       # an agent surface that disagrees with the API it calls.
+      #
+      # Regenerate and diff, rather than calling schemas:check. The check compares
+      # committed output against freshly generated output, but turbo gives
+      # typecheck and test a ^build dependency and contracts' build regenerates
+      # the schemas in write mode. So by the time a later step ran, the files on
+      # disk had already been rewritten and the comparison always passed.
+      #
+      # git does not care what order the steps ran in.
       - name: Contract schema drift
-        run: bun run schemas:check
+        run: |
+          bun run schemas
+          git diff --exit-code -- packages/contracts/schemas
 
   fixtures:
     name: Fixtures are reproducible
