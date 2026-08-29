@@ -256,17 +256,14 @@ export async function gatePullRequest(pr: ListedPr, options: GateOptions): Promi
   if (!options.dryRun) {
     await run(["gh", "pr", "comment", String(pr.number), "--body", renderComment(result)]);
     if (result.outcome === "merged") {
-      const merged = await run([
-        "gh",
-        "pr",
-        "merge",
-        String(pr.number),
-        "--squash",
-        "--delete-branch",
-      ]);
+      // No --delete-branch: it tries to switch off the merged branch and fails
+      // in a detached worktree, after the merge has already happened, which
+      // reads back as a failed merge. Delete the remote ref separately instead.
+      const merged = await run(["gh", "pr", "merge", String(pr.number), "--squash"]);
       if (!merged.ok) {
         return { ...result, outcome: "blocked", reason: "Merge command failed." };
       }
+      await run(["git", "push", "origin", "--delete", pr.headRefName]);
     }
   }
 
