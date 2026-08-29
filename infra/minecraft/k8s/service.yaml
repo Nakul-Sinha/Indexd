@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: velocity-proxy
+  namespace: infra-team
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  selector:
+    app: velocity-proxy
+  ports:
+    - port: 25565
+      targetPort: 25565
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-server-a
+  namespace: infra-team
+spec:
+  type: ClusterIP
+  selector:
+    app: paper-server-a
+  ports:
+    - port: 25566
+      targetPort: 25566
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paper-server-b
+  namespace: infra-team
+spec:
+  type: ClusterIP
+  selector:
+    app: paper-server-b
+  ports:
+    - port: 25567
+      targetPort: 25567
+      protocol: TCP

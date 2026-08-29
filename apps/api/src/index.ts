@@ -1,14 +1,9 @@
-/**
- * The control plane.
- *
- * Scaffold only. Engineer 3 owns the application shell; Engineer 1 owns
- * src/modules/telemetry and src/modules/director inside it.
- */
-
+import "./load-env";
 import type { Elysia } from "elysia";
+import { app } from "./app";
 import { type RollupStore, telemetryPlugin } from "./modules/telemetry/index.ts";
 
-export const PLACEHOLDER = true;
+export { app };
 
 /**
  * The telemetry module's mount point, kept to one call so the shell owner can
@@ -16,6 +11,10 @@ export const PLACEHOLDER = true;
  * RollupStore once the `world_events_rollup` migration lands; until then
  * InMemoryRollupStore from the same module is a working stand-in.
  */
-export function registerTelemetry<T extends Elysia>(app: T, store: RollupStore) {
-  return app.use(telemetryPlugin({ store }));
+export function registerTelemetry<T extends Elysia>(instance: T, store: RollupStore) {
+  return instance.use(telemetryPlugin({ store }));
 }
+
+app.listen(process.env.PORT || 3001);
+
+console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);

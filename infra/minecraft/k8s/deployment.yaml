@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velocity-proxy
+  namespace: infra-team
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: velocity-proxy
+  template:
+    metadata:
+      labels:
+        app: velocity-proxy
+    spec:
+      containers:
+        - name: velocity
+          image: velocity:3.5.0-601
+          ports:
+            - containerPort: 25565
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "768Mi"
+              cpu: "500m"
+          env:
+            # The plugin polls this URL for the dynamic server list.
+            # Defaults to http://localhost:3000 if unset, which is wrong in-cluster;
+            # always configure this to point at the backend Service DNS name.
+            - name: FARLANDS_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: velocity-plugin-config
+                  key: api-base-url
+            # The shared secret the backend's /api/servers/internal route validates.
+            # Stored in a Secret so it is never committed to the manifest in plaintext.
+            - name: FARLANDS_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: velocity-plugin-secret
+                  key: api-secret
+          # NOTE: The velocity-config ConfigMap volume mount has been intentionally
+          # removed.  velocity.toml is now baked into the Docker image via COPY in
+          # the Dockerfile.  Mounting the old ConfigMap here would overwrite the
+          # updated file at pod startup, restoring the static server-a/server-b
+          # entries and nullifying the dynamic routing plugin's configuration.
+          # To update velocity.toml in production, rebuild and redeploy the image.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-server-a
+  namespace: infra-team
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-server-a
+  template:
+    metadata:
+      labels:
+        app: paper-server-a
+    spec:
+      containers:
+        - name: paper
+          image: paper-server-a:26.1.2-69
+          ports:
+            - containerPort: 25566
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1280Mi"
+              cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paper-server-b
+  namespace: infra-team
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paper-server-b
+  template:
+    metadata:
+      labels:
+        app: paper-server-b
+    spec:
+      containers:
+        - name: paper
+          image: paper-server-b:26.1.2-69
+          ports:
+            - containerPort: 25567
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1280Mi"
+              cpu: "1000m"

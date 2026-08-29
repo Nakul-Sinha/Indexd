@@ -1,81 +1,88 @@
 "use client";
 
-import type { ApprovalMintResponse, PreviewResponse } from "@repo/contracts";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
-
-const FROM = "00000000-0000-4000-8000-0000000000a1";
-const TO = "00000000-0000-4000-8000-0000000000a2";
+import { useState } from "react";
 
 export default function ReviewPage() {
-  const preview = useQuery({
-    queryKey: ["preview"],
-    queryFn: () =>
-      api<PreviewResponse>("/v1/servers/server-1/preview", {
-        method: "POST",
-        body: JSON.stringify({ fromVersion: FROM, toVersion: TO }),
-      }),
-  });
-
-  const approve = useMutation({
-    mutationFn: () =>
-      api<ApprovalMintResponse>("/v1/approvals", {
-        method: "POST",
-        body: JSON.stringify({
-          serverId: "server-1",
-          ruleSetVersion: TO,
-          contentDigest: "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-          issuedTo: "flk_cli-1",
-        }),
-      }),
-  });
-
-  const reject = useMutation({
-    mutationFn: () =>
-      api("/v1/proposals/00000000-0000-4000-8000-0000000000p1/reject", {
-        method: "POST",
-        body: JSON.stringify({ reason: "Does not match what I wanted" }),
-      }),
-  });
+  const [decision, setDecision] = useState<"approved" | "rejected" | null>(null);
+  const changes = [
+    [
+      "Join greeting",
+      "Welcome back, {player}!",
+      "A green welcome message greets every new player.",
+    ],
+    ["Starter kit", "16 × Bread • Stone tools", "New explorers receive a small survival kit."],
+    ["Achievement", "First Steps", "Plays a chime when a player breaks their first block."],
+  ];
 
   return (
-    <div>
-      <h1 className="mb-2 text-2xl font-semibold">Review</h1>
-      <p className="mb-6 text-sm text-[var(--muted)]">
-        Semantic diff of two rule versions. Never a JSON patch.
+    <div className="mx-auto max-w-4xl">
+      <p className="eyebrow">Approval gate • Mock mode</p>
+      <h1 className="mt-1 text-3xl font-black">Review a world change</h1>
+      <p className="mt-2 text-[var(--muted)]">
+        Read what will happen in-game before granting a short-lived deployment approval.
       </p>
-      <ul className="mb-6 space-y-2 font-mono text-sm">
-        {preview.data?.semanticDiff.map((line) => (
-          <li key={line} className="rounded bg-[var(--card)] p-3">
-            {line}
-          </li>
-        ))}
-      </ul>
-      <p className="mb-4 text-sm text-[var(--muted)]">
-        Freeze window: measuring (waiting on Engineer 2 / M1).
-      </p>
-      <p className="mb-6 text-sm text-[var(--muted)]">
-        Approve mints a short-lived token. Rule rollback later stops the rule acting further; it
-        does not undo diamonds already granted.
-      </p>
-      <div className="flex gap-3">
-        <button
-          className="rounded bg-[var(--ok)] px-4 py-2 text-black"
-          onClick={() => approve.mutate()}
-          type="button"
-        >
-          Approve
-        </button>
-        <button
-          className="rounded border border-[var(--line)] px-4 py-2"
-          onClick={() => reject.mutate()}
-          type="button"
-        >
-          Reject
-        </button>
+      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_280px]">
+        <section className="panel overflow-hidden">
+          <div className="border-b border-[var(--line)] bg-black/15 p-5">
+            <p className="font-black">
+              Emerald SMP{" "}
+              <span className="ml-2 rounded bg-[var(--gold)]/20 px-2 py-1 text-xs text-[var(--gold)]">
+                v12 → v13
+              </span>
+            </p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Proposed by Realm Director • 2 minutes ago
+            </p>
+          </div>
+          <div className="divide-y divide-[var(--line)]">
+            {changes.map(([title, value, description]) => (
+              <div className="p-5" key={title}>
+                <p className="font-bold text-[var(--lime)]">+ {title}</p>
+                <p className="mt-2 font-semibold">{value}</p>
+                <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        <aside className="panel h-fit p-5">
+          <p className="eyebrow">Impact check</p>
+          <h2 className="mt-1 text-lg font-black">Safe to ship?</h2>
+          <div className="mt-4 space-y-3 text-sm">
+            <p className="rounded bg-black/20 p-3">
+              <b className="text-[var(--lime)]">✓ No downtime</b>
+              <br />
+              <span className="text-[var(--muted)]">Applied during the next safe window.</span>
+            </p>
+            <p className="rounded bg-black/20 p-3">
+              <b className="text-[var(--lime)]">✓ Reversible</b>
+              <br />
+              <span className="text-[var(--muted)]">Previous rule version remains ready.</span>
+            </p>
+          </div>
+          <button
+            className="mc-button mt-5 w-full"
+            onClick={() => setDecision("approved")}
+            type="button"
+          >
+            ✓ Approve & deploy
+          </button>
+          <button
+            className="mc-button danger mt-3 w-full"
+            onClick={() => setDecision("rejected")}
+            type="button"
+          >
+            Reject change
+          </button>
+        </aside>
       </div>
-      {approve.data ? (
-        <pre className="mt-4 overflow-auto text-xs">{JSON.stringify(approve.data, null, 2)}</pre>
+      {decision ? (
+        <div
+          className={`mt-5 rounded border p-4 font-bold ${decision === "approved" ? "border-[var(--lime)] bg-[var(--lime)]/10 text-[var(--lime)]" : "border-[var(--redstone)] bg-[var(--redstone)]/10 text-[var(--redstone)]"}`}
+        >
+          {decision === "approved"
+            ? "Approval created. The deployment is queued."
+            : "Proposal rejected. Your feedback will help shape the next proposal."}
+        </div>
       ) : null}
     </div>
   );

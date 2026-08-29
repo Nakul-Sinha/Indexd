@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1781555730230,
+      "tag": "0000_gigantic_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782028874610,
+      "tag": "0001_lumpy_lady_bullseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782072051532,
+      "tag": "0002_repair_backup_delete_failed_enum",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782112598439,
+      "tag": "0003_peaceful_wonder_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782567542665,
+      "tag": "0004_certain_karen_page",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783000000000,
+      "tag": "0005_game_servers_user_active_name_idx",
+      "breakpoints": true
+    }
+  ]
+}

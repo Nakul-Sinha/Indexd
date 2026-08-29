@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lobby
+  namespace: farlands-system
+  labels:
+    app: lobby
+    farlands.dev/role: lobby
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lobby
+  template:
+    metadata:
+      labels:
+        app: lobby
+        farlands.dev/role: lobby
+    spec:
+      tolerations:
+        - key: farlands.sh/nodepool
+          operator: Equal
+          value: infra-team-autoscale
+          effect: NoSchedule
+      containers:
+        - name: paper
+          image: itzg/minecraft-server:java25
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: minecraft
+              containerPort: 25565
+          env:
+            - name: EULA
+              value: "TRUE"
+            - name: TYPE
+              value: PAPER
+            - name: VERSION
+              value: "26.1.2"
+            - name: ONLINE_MODE
+              value: "false"
+            - name: ENABLE_RCON
+              value: "false"
+            - name: MEMORY
+              value: 768M
+            - name: MODE
+              value: adventure
+            - name: MOTD
+              value: "Farlands Live lobby — holding during a rule deploy"
+            - name: LEVEL_TYPE
+              value: flat
+            - name: VIEW_DISTANCE
+              value: "4"
+            - name: MAX_PLAYERS
+              value: "40"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1024Mi
+            limits:
+              cpu: 750m
+              memory: 1536Mi
+          startupProbe:
+            tcpSocket:
+              port: 25565
+            failureThreshold: 36
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 25565
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lobby
+  namespace: farlands-system
+  labels:
+    app: lobby
+spec:
+  type: ClusterIP
+  selector:
+    app: lobby
+  ports:
+    - name: minecraft
+      port: 25565
+      targetPort: 25565

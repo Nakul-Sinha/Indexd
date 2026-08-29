@@ -1,0 +1,1 @@
+ALTER TYPE "public"."backup_event_type" ADD VALUE 'delete_failed' BEFORE 'restore_started';

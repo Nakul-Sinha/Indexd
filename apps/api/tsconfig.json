@@ -1,5 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "types": ["bun"] },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "compilerOptions": {
+    "types": ["bun"],
+    "verbatimModuleSyntax": false,
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"]
 }

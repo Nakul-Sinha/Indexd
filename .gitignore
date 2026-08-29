@@ -1,3 +1,4 @@
+# Dependencies and build
 node_modules/
 dist/
 .turbo/
@@ -5,18 +6,67 @@ dist/
 out/
 *.tsbuildinfo
 
+# Secrets — never commit real credentials or certs
 .env
 .env.*
 !.env.example
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.jks
+root.crt
+**/root.crt
+credentials.json
+kubeconfig
+*.kubeconfig
 
-.DS_Store
-Thumbs.db
+# Bun install artifacts. bun.lock is committed.
+*.bun
 
+# Java / Gradle / Maven
+.gradle/
+**/build/
 target/
 *.class
 *.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OpenTofu / Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Archives and local scratch
+*.zip
+*.tar.gz
+*.tgz
 *.log
+/local/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test / coverage
 coverage/
 
 .claude/worktrees/
@@ -24,3 +74,5 @@ coverage/
 tools/pr-gatekeeper/gate.log
 
 *.diff
+# Local-only third-party panorama test assets. Do not distribute.
+/krishang/apps/web/public/assets/cherry-blossom-panorama/
