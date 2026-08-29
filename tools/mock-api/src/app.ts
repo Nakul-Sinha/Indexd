@@ -1,6 +1,7 @@
 import {
   type ApprovalRefusalReason,
   approvalRequired,
+  notFound as buildNotFound,
   contentDigest,
   type Deployment,
   digestsEqual,
@@ -57,15 +58,9 @@ function ownsServer(principal: string, serverId: string): boolean {
   return principal === DEFAULT_PRINCIPAL;
 }
 
+/** Thin wrapper so the shape has one definition in the contract, not two here. */
 function notFound(tool: string, resource: string) {
-  return {
-    error: "not_found" as const,
-    tool,
-    resource,
-    message: `No ${resource} you can see.`,
-    resolution:
-      "Read tools are scoped to servers you own. Check the server id, or ask the owner to grant access.",
-  };
+  return buildNotFound({ tool, resource });
 }
 
 function latestVersion(serverId: string) {

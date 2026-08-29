@@ -30,7 +30,12 @@ import { Deployment, DeploymentState, DeploymentStateEvent } from "../src/deploy
 import { SseEvent } from "../src/events.ts";
 import { TOOL_DEFINITIONS, toolInputs } from "../src/mcp-tools.ts";
 import { Experiment, Proposal } from "../src/proposals.ts";
-import { ApprovalRequiredRefusal, NotFoundRefusal, RateLimitedRefusal } from "../src/refusal.ts";
+import {
+  ApprovalRequiredRefusal,
+  ClusterApprovalRequiredRefusal,
+  NotFoundRefusal,
+  RateLimitedRefusal,
+} from "../src/refusal.ts";
 import { RuleDiff, RuleSet, RuleSetVersion } from "../src/rules.ts";
 import { RollupMetrics, TelemetryBatch, WorldEvent, WorldEventsRollup } from "../src/telemetry.ts";
 
@@ -43,6 +48,7 @@ const types = {
   DeploymentStateEvent,
   SseEvent,
   ApprovalRequiredRefusal,
+  ClusterApprovalRequiredRefusal,
   RateLimitedRefusal,
   NotFoundRefusal,
   RuleSet,

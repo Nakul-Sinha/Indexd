@@ -45,6 +45,30 @@ export const ApprovalRequiredRefusal = Type.Object(
 export type ApprovalRequiredRefusal = Static<typeof ApprovalRequiredRefusal>;
 
 /**
+ * The refusal for act tools that operate on the cluster rather than on rules.
+ *
+ * A separate shape rather than nullable fields on the one above, because these
+ * really are a different refusal: create_server has no server yet and no rule
+ * version, and neither operation is undone by a rollback. Widening the rule
+ * refusal to fit them would make server_id and rule_set_version optional for
+ * deploy_rules too, which is where they matter most.
+ */
+export const ClusterApprovalRequiredRefusal = Type.Object(
+  {
+    error: Type.Literal("approval_required"),
+    reason: ApprovalRefusalReason,
+    tool: Type.String(),
+    /** Null for create_server, which has no server yet. */
+    server_id: Type.Union([ServerId, Type.Null()]),
+    operation: Type.String({ description: "The cluster operation being refused" }),
+    message: Type.String(),
+    resolution: Type.String(),
+  },
+  { $id: "ClusterApprovalRequiredRefusal" },
+);
+export type ClusterApprovalRequiredRefusal = Static<typeof ClusterApprovalRequiredRefusal>;
+
+/**
  * Rate limiting is a different outcome and must be distinguishable from an
  * approval refusal, because the correct next move differs: wait, rather than ask
  * a human.
@@ -81,7 +105,12 @@ export const NotFoundRefusal = Type.Object(
 );
 export type NotFoundRefusal = Static<typeof NotFoundRefusal>;
 
-export const Refusal = Type.Union([ApprovalRequiredRefusal, RateLimitedRefusal, NotFoundRefusal]);
+export const Refusal = Type.Union([
+  ApprovalRequiredRefusal,
+  ClusterApprovalRequiredRefusal,
+  RateLimitedRefusal,
+  NotFoundRefusal,
+]);
 export type Refusal = Static<typeof Refusal>;
 
 const REASON_TEXT: Record<ApprovalRefusalReason, string> = {
@@ -123,6 +152,71 @@ export function approvalRequired(input: {
     content_digest: input.content_digest,
     message: `Deploying rule set v${input.rule_set_version} to ${input.server_id} ${REASON_TEXT[input.reason]}.`,
     resolution: RESOLUTION_TEXT[input.reason],
+  };
+}
+
+/**
+ * Cluster operations get their own resolution text, because the consequence
+ * differs: a stop disconnects every connected player and no snapshot undoes it.
+ */
+export function clusterApprovalRequired(input: {
+  reason: ApprovalRefusalReason;
+  tool: string;
+  server_id: string | null;
+  operation: string;
+}): ClusterApprovalRequiredRefusal {
+  const target = input.server_id ? ` on ${input.server_id}` : "";
+  return {
+    error: "approval_required",
+    reason: input.reason,
+    tool: input.tool,
+    server_id: input.server_id,
+    operation: input.operation,
+    message: `The ${input.operation} operation${target} ${REASON_TEXT[input.reason]}.`,
+    resolution:
+      input.reason === "missing"
+        ? "Ask the server owner to approve this operation. It changes cluster state and is not undone by a rule rollback, so it needs its own approval."
+        : RESOLUTION_TEXT[input.reason],
+  };
+}
+
+/**
+ * Built here rather than at each call site. Two surfaces hand building the same
+ * shape is precisely the drift a single constructor exists to prevent, and it
+ * had already happened once between the MCP server and the mock API.
+ */
+export function rateLimited(input: {
+  tool: string;
+  server_id: string;
+  limit: number;
+  window_seconds: number;
+  retry_after_seconds: number;
+}): RateLimitedRefusal {
+  return {
+    error: "rate_limited",
+    tool: input.tool,
+    server_id: input.server_id,
+    limit: input.limit,
+    window_seconds: input.window_seconds,
+    retry_after_seconds: input.retry_after_seconds,
+    message: `${input.tool} is limited to ${input.limit} calls per ${input.window_seconds} seconds and that budget is spent.`,
+    resolution: `Wait ${input.retry_after_seconds} seconds and call again. This is a cost limit, not an approval problem, so no human action is needed.`,
+  };
+}
+
+/**
+ * Out of scope reads are refused rather than returned empty, because an empty
+ * result and a forbidden one are distinguishable, and that difference leaks
+ * whether a server exists.
+ */
+export function notFound(input: { tool: string; resource: string }): NotFoundRefusal {
+  return {
+    error: "not_found",
+    tool: input.tool,
+    resource: input.resource,
+    message: `No ${input.resource} you can see.`,
+    resolution:
+      "Read tools are scoped to servers you own. Check the identifier, or ask the owner to grant access.",
   };
 }
 
