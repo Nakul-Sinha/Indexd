@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "rules": [
+    { "rule": "gamerule", "id": "eternal_day", "name": "do_daylight_cycle", "value": false }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule": "mob_spawn_rate",
+      "id": "more_hostiles_in_mines",
+      "mob": "creeper",
+      "region": "mining_world",
+      "multiplier": 1.4
+    },
+    {
+      "rule": "entity_drop",
+      "id": "creeper_gunpowder_bonus",
+      "entity": "creeper",
+      "drops": [{ "item": "gunpowder", "count": 3, "chance": 0.6 }]
+    },
+    { "rule": "gamerule", "id": "keep_inv_on", "name": "keep_inventory", "value": true }
+  ]
+}

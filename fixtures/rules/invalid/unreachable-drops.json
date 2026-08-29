@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule": "block_drop",
+      "id": "silent_nerf",
+      "block": "diamond_ore",
+      "drops": [{ "item": "diamond", "count": 1, "chance": 0 }],
+      "replace_default": true
+    }
+  ]
+}

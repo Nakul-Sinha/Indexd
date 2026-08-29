@@ -1,0 +1,4 @@
+{
+  "schema_version": 1,
+  "rules": [{ "rule": "gamerule", "id": "sneaky", "name": "command_block_output", "value": true }]
+}

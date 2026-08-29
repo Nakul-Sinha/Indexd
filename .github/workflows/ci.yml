@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Lint and format
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun run test
+
+      # Seam 1, enforced mechanically. The MCP tool schemas are a serialization
+      # of the contract types, so a drifted schema is a build failure rather than
+      # an agent surface that disagrees with the API it calls.
+      - name: Contract schema drift
+        run: bun run schemas:check
+
+  fixtures:
+    name: Fixtures are reproducible
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # The telemetry sample is generated from a seeded generator so it can be
+      # reviewed as a diff. If regenerating it produces a different file, either
+      # the generator stopped being deterministic or the committed sample was
+      # edited by hand. Both are worth failing on.
+      - name: Regenerate the telemetry sample
+        run: bun run fixtures/telemetry/generate.ts
+
+      - name: Check for drift
+        run: git diff --exit-code -- fixtures/

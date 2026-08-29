@@ -1,0 +1,2610 @@
+{
+  "Deployment": {
+    "type": "object",
+    "required": [
+      "deployment_id",
+      "server_id",
+      "from_version",
+      "to_version",
+      "state",
+      "candidate_pod",
+      "snapshot_id",
+      "player_visible_ms",
+      "queue_position",
+      "approved_by",
+      "initiated_by",
+      "started_at",
+      "finished_at",
+      "error"
+    ],
+    "properties": {
+      "deployment_id": {
+        "pattern": "^dep_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "from_version": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "to_version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "state": {
+        "description": "Canonical deployment state. Engineer 2 owns this union.",
+        "anyOf": [
+          {
+            "const": "queued",
+            "type": "string"
+          },
+          {
+            "const": "building",
+            "type": "string"
+          },
+          {
+            "const": "staging",
+            "type": "string"
+          },
+          {
+            "const": "presync",
+            "type": "string"
+          },
+          {
+            "const": "freezing",
+            "type": "string"
+          },
+          {
+            "const": "verifying",
+            "type": "string"
+          },
+          {
+            "const": "cutover",
+            "type": "string"
+          },
+          {
+            "const": "draining",
+            "type": "string"
+          },
+          {
+            "const": "idle",
+            "type": "string"
+          },
+          {
+            "const": "aborted",
+            "type": "string"
+          },
+          {
+            "const": "failed",
+            "type": "string"
+          }
+        ]
+      },
+      "candidate_pod": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "snapshot_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "player_visible_ms": {
+        "anyOf": [
+          {
+            "minimum": 0,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "queue_position": {
+        "anyOf": [
+          {
+            "minimum": 0,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "approved_by": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "initiated_by": {
+        "type": "string"
+      },
+      "started_at": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      },
+      "finished_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "error": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "DeploymentState": {
+    "description": "Canonical deployment state. Engineer 2 owns this union.",
+    "anyOf": [
+      {
+        "const": "queued",
+        "type": "string"
+      },
+      {
+        "const": "building",
+        "type": "string"
+      },
+      {
+        "const": "staging",
+        "type": "string"
+      },
+      {
+        "const": "presync",
+        "type": "string"
+      },
+      {
+        "const": "freezing",
+        "type": "string"
+      },
+      {
+        "const": "verifying",
+        "type": "string"
+      },
+      {
+        "const": "cutover",
+        "type": "string"
+      },
+      {
+        "const": "draining",
+        "type": "string"
+      },
+      {
+        "const": "idle",
+        "type": "string"
+      },
+      {
+        "const": "aborted",
+        "type": "string"
+      },
+      {
+        "const": "failed",
+        "type": "string"
+      }
+    ]
+  },
+  "DeploymentStateEvent": {
+    "type": "object",
+    "required": [
+      "event",
+      "deployment_id",
+      "server_id",
+      "state",
+      "detail",
+      "ts"
+    ],
+    "properties": {
+      "event": {
+        "const": "deployment_state",
+        "type": "string"
+      },
+      "deployment_id": {
+        "pattern": "^dep_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "state": {
+        "description": "Canonical deployment state. Engineer 2 owns this union.",
+        "anyOf": [
+          {
+            "const": "queued",
+            "type": "string"
+          },
+          {
+            "const": "building",
+            "type": "string"
+          },
+          {
+            "const": "staging",
+            "type": "string"
+          },
+          {
+            "const": "presync",
+            "type": "string"
+          },
+          {
+            "const": "freezing",
+            "type": "string"
+          },
+          {
+            "const": "verifying",
+            "type": "string"
+          },
+          {
+            "const": "cutover",
+            "type": "string"
+          },
+          {
+            "const": "draining",
+            "type": "string"
+          },
+          {
+            "const": "idle",
+            "type": "string"
+          },
+          {
+            "const": "aborted",
+            "type": "string"
+          },
+          {
+            "const": "failed",
+            "type": "string"
+          }
+        ]
+      },
+      "detail": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "ts": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      }
+    }
+  },
+  "SseEvent": {
+    "anyOf": [
+      {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "server_id",
+          "ts",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "description": "Monotonic per server. Sent back as Last-Event-ID.",
+            "type": "string"
+          },
+          "type": {
+            "const": "deployment_state",
+            "type": "string"
+          },
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "deployment_id",
+              "state",
+              "detail",
+              "queue_position"
+            ],
+            "properties": {
+              "deployment_id": {
+                "pattern": "^dep_[a-z0-9]{3,32}$",
+                "type": "string"
+              },
+              "state": {
+                "description": "Canonical deployment state. Engineer 2 owns this union.",
+                "anyOf": [
+                  {
+                    "const": "queued",
+                    "type": "string"
+                  },
+                  {
+                    "const": "building",
+                    "type": "string"
+                  },
+                  {
+                    "const": "staging",
+                    "type": "string"
+                  },
+                  {
+                    "const": "presync",
+                    "type": "string"
+                  },
+                  {
+                    "const": "freezing",
+                    "type": "string"
+                  },
+                  {
+                    "const": "verifying",
+                    "type": "string"
+                  },
+                  {
+                    "const": "cutover",
+                    "type": "string"
+                  },
+                  {
+                    "const": "draining",
+                    "type": "string"
+                  },
+                  {
+                    "const": "idle",
+                    "type": "string"
+                  },
+                  {
+                    "const": "aborted",
+                    "type": "string"
+                  },
+                  {
+                    "const": "failed",
+                    "type": "string"
+                  }
+                ]
+              },
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "queue_position": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "server_id",
+          "ts",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "description": "Monotonic per server. Sent back as Last-Event-ID.",
+            "type": "string"
+          },
+          "type": {
+            "const": "world_activity",
+            "type": "string"
+          },
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "window_start",
+              "window_end",
+              "metrics"
+            ],
+            "properties": {
+              "window_start": {
+                "format": "date-time",
+                "description": "ISO-8601 UTC timestamp",
+                "type": "string"
+              },
+              "window_end": {
+                "format": "date-time",
+                "description": "ISO-8601 UTC timestamp",
+                "type": "string"
+              },
+              "metrics": {
+                "type": "object",
+                "required": [
+                  "joins",
+                  "leaves",
+                  "deaths",
+                  "blocks_placed",
+                  "blocks_broken",
+                  "chat_messages",
+                  "unique_players",
+                  "mean_session_seconds",
+                  "seconds_in_region"
+                ],
+                "properties": {
+                  "joins": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "leaves": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "deaths": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "blocks_placed": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "blocks_broken": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "chat_messages": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "unique_players": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "mean_session_seconds": {
+                    "anyOf": [
+                      {
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "seconds_in_region": {
+                    "type": "object",
+                    "patternProperties": {
+                      "^(.*)$": {
+                        "minimum": 0,
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "server_id",
+          "ts",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "description": "Monotonic per server. Sent back as Last-Event-ID.",
+            "type": "string"
+          },
+          "type": {
+            "const": "proposal_created",
+            "type": "string"
+          },
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "proposal_id",
+              "summary",
+              "confidence"
+            ],
+            "properties": {
+              "proposal_id": {
+                "pattern": "^prp_[a-z0-9]{3,32}$",
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "confidence": {
+                "minimum": 0,
+                "maximum": 1,
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "server_id",
+          "ts",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "description": "Monotonic per server. Sent back as Last-Event-ID.",
+            "type": "string"
+          },
+          "type": {
+            "const": "server_log",
+            "type": "string"
+          },
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "line",
+              "stream"
+            ],
+            "properties": {
+              "line": {
+                "type": "string"
+              },
+              "stream": {
+                "anyOf": [
+                  {
+                    "const": "stdout",
+                    "type": "string"
+                  },
+                  {
+                    "const": "stderr",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "server_id",
+          "ts",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "description": "Monotonic per server. Sent back as Last-Event-ID.",
+            "type": "string"
+          },
+          "type": {
+            "const": "heartbeat",
+            "type": "string"
+          },
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "ts": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {}
+          }
+        }
+      }
+    ]
+  },
+  "ApprovalRequiredRefusal": {
+    "$id": "ApprovalRequiredRefusal",
+    "type": "object",
+    "required": [
+      "error",
+      "reason",
+      "tool",
+      "server_id",
+      "rule_set_version",
+      "content_digest",
+      "message",
+      "resolution"
+    ],
+    "properties": {
+      "error": {
+        "const": "approval_required",
+        "type": "string"
+      },
+      "reason": {
+        "anyOf": [
+          {
+            "const": "missing",
+            "type": "string"
+          },
+          {
+            "const": "expired",
+            "type": "string"
+          },
+          {
+            "const": "consumed",
+            "type": "string"
+          },
+          {
+            "const": "principal_mismatch",
+            "type": "string"
+          },
+          {
+            "const": "digest_mismatch",
+            "type": "string"
+          }
+        ]
+      },
+      "tool": {
+        "description": "The tool or command that was refused",
+        "type": "string"
+      },
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "rule_set_version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "content_digest": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "description": "SHA-256 over RFC 8785 canonical JSON, prefixed with the algorithm",
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "resolution": {
+        "description": "What the caller should do instead. Never 'retry'.",
+        "type": "string"
+      }
+    }
+  },
+  "RateLimitedRefusal": {
+    "$id": "RateLimitedRefusal",
+    "type": "object",
+    "required": [
+      "error",
+      "tool",
+      "server_id",
+      "limit",
+      "window_seconds",
+      "retry_after_seconds",
+      "message",
+      "resolution"
+    ],
+    "properties": {
+      "error": {
+        "const": "rate_limited",
+        "type": "string"
+      },
+      "tool": {
+        "type": "string"
+      },
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "limit": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "window_seconds": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "retry_after_seconds": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "message": {
+        "type": "string"
+      },
+      "resolution": {
+        "type": "string"
+      }
+    }
+  },
+  "NotFoundRefusal": {
+    "$id": "NotFoundRefusal",
+    "type": "object",
+    "required": [
+      "error",
+      "tool",
+      "resource",
+      "message",
+      "resolution"
+    ],
+    "properties": {
+      "error": {
+        "const": "not_found",
+        "type": "string"
+      },
+      "tool": {
+        "type": "string"
+      },
+      "resource": {
+        "type": "string"
+      },
+      "message": {
+        "type": "string"
+      },
+      "resolution": {
+        "type": "string"
+      }
+    }
+  },
+  "RuleSet": {
+    "type": "object",
+    "required": [
+      "rule_set_id",
+      "server_id",
+      "name",
+      "description",
+      "game_type",
+      "current_version"
+    ],
+    "properties": {
+      "rule_set_id": {
+        "type": "string"
+      },
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "name": {
+        "minLength": 1,
+        "maxLength": 120,
+        "type": "string"
+      },
+      "description": {
+        "anyOf": [
+          {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "game_type": {
+        "description": "A seam, deliberately left a seam. One game done properly.",
+        "const": "minecraft_paper",
+        "type": "string"
+      },
+      "current_version": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "RuleSetVersion": {
+    "type": "object",
+    "required": [
+      "id",
+      "rule_set_id",
+      "version",
+      "json_url",
+      "content_digest",
+      "built_jar_url",
+      "source",
+      "source_prompt",
+      "created_by",
+      "created_at"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "rule_set_id": {
+        "type": "string"
+      },
+      "version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "json_url": {
+        "description": "S3 URL of the write-once rule document",
+        "type": "string"
+      },
+      "content_digest": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "description": "SHA-256 over RFC 8785 canonical JSON, prefixed with the algorithm",
+        "type": "string"
+      },
+      "built_jar_url": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "source": {
+        "description": "Origin of a rule version: a human form, an agent, or the Director",
+        "anyOf": [
+          {
+            "const": "form",
+            "type": "string"
+          },
+          {
+            "const": "agent",
+            "type": "string"
+          },
+          {
+            "const": "director",
+            "type": "string"
+          }
+        ]
+      },
+      "source_prompt": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "created_by": {
+        "type": "string"
+      },
+      "created_at": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      }
+    }
+  },
+  "RuleDiff": {
+    "type": "object",
+    "required": [
+      "server_id",
+      "from_version",
+      "to_version",
+      "entries"
+    ],
+    "properties": {
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "from_version": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "to_version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "entries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "kind",
+            "rule_id",
+            "summary",
+            "before",
+            "after"
+          ],
+          "properties": {
+            "kind": {
+              "anyOf": [
+                {
+                  "const": "added",
+                  "type": "string"
+                },
+                {
+                  "const": "removed",
+                  "type": "string"
+                },
+                {
+                  "const": "changed",
+                  "type": "string"
+                }
+              ]
+            },
+            "rule_id": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "before": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "after": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "WorldEvent": {
+    "$id": "WorldEvent",
+    "type": "object",
+    "required": [
+      "kind",
+      "ts",
+      "player_name",
+      "region",
+      "subject",
+      "value"
+    ],
+    "properties": {
+      "kind": {
+        "anyOf": [
+          {
+            "const": "join",
+            "type": "string"
+          },
+          {
+            "const": "leave",
+            "type": "string"
+          },
+          {
+            "const": "death",
+            "type": "string"
+          },
+          {
+            "const": "block_placed",
+            "type": "string"
+          },
+          {
+            "const": "block_broken",
+            "type": "string"
+          },
+          {
+            "const": "time_in_region",
+            "type": "string"
+          },
+          {
+            "const": "chat_volume",
+            "type": "string"
+          }
+        ]
+      },
+      "ts": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      },
+      "player_name": {
+        "anyOf": [
+          {
+            "maxLength": 64,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "region": {
+        "anyOf": [
+          {
+            "maxLength": 32,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "subject": {
+        "anyOf": [
+          {
+            "maxLength": 64,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "value": {
+        "minimum": 0,
+        "type": "number"
+      }
+    }
+  },
+  "TelemetryBatch": {
+    "type": "object",
+    "required": [
+      "server_id",
+      "events"
+    ],
+    "properties": {
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "events": {
+        "minItems": 1,
+        "maxItems": 1000,
+        "type": "array",
+        "items": {
+          "$id": "WorldEvent",
+          "type": "object",
+          "required": [
+            "kind",
+            "ts",
+            "player_name",
+            "region",
+            "subject",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "anyOf": [
+                {
+                  "const": "join",
+                  "type": "string"
+                },
+                {
+                  "const": "leave",
+                  "type": "string"
+                },
+                {
+                  "const": "death",
+                  "type": "string"
+                },
+                {
+                  "const": "block_placed",
+                  "type": "string"
+                },
+                {
+                  "const": "block_broken",
+                  "type": "string"
+                },
+                {
+                  "const": "time_in_region",
+                  "type": "string"
+                },
+                {
+                  "const": "chat_volume",
+                  "type": "string"
+                }
+              ]
+            },
+            "ts": {
+              "format": "date-time",
+              "description": "ISO-8601 UTC timestamp",
+              "type": "string"
+            },
+            "player_name": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "region": {
+              "anyOf": [
+                {
+                  "maxLength": 32,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "subject": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "value": {
+              "minimum": 0,
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  },
+  "RollupMetrics": {
+    "type": "object",
+    "required": [
+      "joins",
+      "leaves",
+      "deaths",
+      "blocks_placed",
+      "blocks_broken",
+      "chat_messages",
+      "unique_players",
+      "mean_session_seconds",
+      "seconds_in_region"
+    ],
+    "properties": {
+      "joins": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "leaves": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "deaths": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "blocks_placed": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "blocks_broken": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "chat_messages": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "unique_players": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "mean_session_seconds": {
+        "anyOf": [
+          {
+            "minimum": 0,
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "seconds_in_region": {
+        "type": "object",
+        "patternProperties": {
+          "^(.*)$": {
+            "minimum": 0,
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "WorldEventsRollup": {
+    "type": "object",
+    "required": [
+      "server_id",
+      "window_start",
+      "window_end",
+      "metrics"
+    ],
+    "properties": {
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "window_start": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      },
+      "window_end": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      },
+      "metrics": {
+        "type": "object",
+        "required": [
+          "joins",
+          "leaves",
+          "deaths",
+          "blocks_placed",
+          "blocks_broken",
+          "chat_messages",
+          "unique_players",
+          "mean_session_seconds",
+          "seconds_in_region"
+        ],
+        "properties": {
+          "joins": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "leaves": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "deaths": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "blocks_placed": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "blocks_broken": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "chat_messages": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "unique_players": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "mean_session_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seconds_in_region": {
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "minimum": 0,
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "Proposal": {
+    "type": "object",
+    "required": [
+      "proposal_id",
+      "server_id",
+      "suggested_rules",
+      "rationale",
+      "confidence",
+      "observed",
+      "status",
+      "reviewed_by",
+      "reviewed_at",
+      "rejection_reason",
+      "created_at"
+    ],
+    "properties": {
+      "proposal_id": {
+        "pattern": "^prp_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "suggested_rules": {},
+      "rationale": {
+        "minLength": 1,
+        "maxLength": 2000,
+        "type": "string"
+      },
+      "confidence": {
+        "minimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "observed": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "joins",
+              "leaves",
+              "deaths",
+              "blocks_placed",
+              "blocks_broken",
+              "chat_messages",
+              "unique_players",
+              "mean_session_seconds",
+              "seconds_in_region"
+            ],
+            "properties": {
+              "joins": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "leaves": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "deaths": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "blocks_placed": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "blocks_broken": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "chat_messages": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "unique_players": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "mean_session_seconds": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "seconds_in_region": {
+                "type": "object",
+                "patternProperties": {
+                  "^(.*)$": {
+                    "minimum": 0,
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "status": {
+        "anyOf": [
+          {
+            "const": "pending",
+            "type": "string"
+          },
+          {
+            "const": "approved",
+            "type": "string"
+          },
+          {
+            "const": "rejected",
+            "type": "string"
+          }
+        ]
+      },
+      "reviewed_by": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "reviewed_at": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "rejection_reason": {
+        "anyOf": [
+          {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "created_at": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      }
+    }
+  },
+  "Experiment": {
+    "type": "object",
+    "required": [
+      "experiment_id",
+      "design",
+      "arm",
+      "server_id",
+      "deployment_id",
+      "rule_version",
+      "window_before",
+      "window_after",
+      "metrics_before",
+      "metrics_after",
+      "delta",
+      "n_players",
+      "n_sessions",
+      "notes",
+      "created_at"
+    ],
+    "properties": {
+      "experiment_id": {
+        "type": "string"
+      },
+      "design": {
+        "anyOf": [
+          {
+            "const": "pre_post",
+            "type": "string"
+          },
+          {
+            "const": "parallel",
+            "type": "string"
+          }
+        ]
+      },
+      "arm": {
+        "anyOf": [
+          {
+            "const": "director",
+            "type": "string"
+          },
+          {
+            "const": "human",
+            "type": "string"
+          },
+          {
+            "const": "random_baseline",
+            "type": "string"
+          }
+        ]
+      },
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "deployment_id": {
+        "type": "string"
+      },
+      "rule_version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "window_before": {
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "end": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          }
+        }
+      },
+      "window_after": {
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "end": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          }
+        }
+      },
+      "metrics_before": {
+        "type": "object",
+        "required": [
+          "joins",
+          "leaves",
+          "deaths",
+          "blocks_placed",
+          "blocks_broken",
+          "chat_messages",
+          "unique_players",
+          "mean_session_seconds",
+          "seconds_in_region"
+        ],
+        "properties": {
+          "joins": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "leaves": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "deaths": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "blocks_placed": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "blocks_broken": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "chat_messages": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "unique_players": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "mean_session_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seconds_in_region": {
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "minimum": 0,
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "metrics_after": {
+        "type": "object",
+        "required": [
+          "joins",
+          "leaves",
+          "deaths",
+          "blocks_placed",
+          "blocks_broken",
+          "chat_messages",
+          "unique_players",
+          "mean_session_seconds",
+          "seconds_in_region"
+        ],
+        "properties": {
+          "joins": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "leaves": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "deaths": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "blocks_placed": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "blocks_broken": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "chat_messages": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "unique_players": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "mean_session_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seconds_in_region": {
+            "type": "object",
+            "patternProperties": {
+              "^(.*)$": {
+                "minimum": 0,
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "delta": {
+        "type": "object",
+        "patternProperties": {
+          "^(.*)$": {
+            "type": "number"
+          }
+        }
+      },
+      "n_players": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "n_sessions": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "notes": {
+        "anyOf": [
+          {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "created_at": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      }
+    }
+  },
+  "ServerSummary": {
+    "type": "object",
+    "required": [
+      "server_id",
+      "name",
+      "hostname",
+      "state",
+      "player_count",
+      "max_players",
+      "tps",
+      "current_version",
+      "regions"
+    ],
+    "properties": {
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "hostname": {
+        "description": "Stable public address, safe to share",
+        "type": "string"
+      },
+      "state": {
+        "anyOf": [
+          {
+            "const": "running",
+            "type": "string"
+          },
+          {
+            "const": "stopped",
+            "type": "string"
+          },
+          {
+            "const": "starting",
+            "type": "string"
+          },
+          {
+            "const": "deploying",
+            "type": "string"
+          }
+        ]
+      },
+      "player_count": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "max_players": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "tps": {
+        "anyOf": [
+          {
+            "minimum": 0,
+            "maximum": 20,
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "current_version": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "regions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "AuthorRulesRequest": {
+    "type": "object",
+    "required": [
+      "prompt"
+    ],
+    "properties": {
+      "prompt": {
+        "minLength": 1,
+        "maxLength": 4000,
+        "type": "string"
+      }
+    }
+  },
+  "AuthorRulesResponse": {
+    "type": "object",
+    "required": [
+      "version",
+      "diff",
+      "attempts"
+    ],
+    "properties": {
+      "version": {
+        "type": "object",
+        "required": [
+          "id",
+          "rule_set_id",
+          "version",
+          "json_url",
+          "content_digest",
+          "built_jar_url",
+          "source",
+          "source_prompt",
+          "created_by",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rule_set_id": {
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "json_url": {
+            "description": "S3 URL of the write-once rule document",
+            "type": "string"
+          },
+          "content_digest": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "SHA-256 over RFC 8785 canonical JSON, prefixed with the algorithm",
+            "type": "string"
+          },
+          "built_jar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "description": "Origin of a rule version: a human form, an agent, or the Director",
+            "anyOf": [
+              {
+                "const": "form",
+                "type": "string"
+              },
+              {
+                "const": "agent",
+                "type": "string"
+              },
+              {
+                "const": "director",
+                "type": "string"
+              }
+            ]
+          },
+          "source_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          }
+        }
+      },
+      "diff": {
+        "type": "object",
+        "required": [
+          "server_id",
+          "from_version",
+          "to_version",
+          "entries"
+        ],
+        "properties": {
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "from_version": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to_version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "rule_id",
+                "summary",
+                "before",
+                "after"
+              ],
+              "properties": {
+                "kind": {
+                  "anyOf": [
+                    {
+                      "const": "added",
+                      "type": "string"
+                    },
+                    {
+                      "const": "removed",
+                      "type": "string"
+                    },
+                    {
+                      "const": "changed",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "rule_id": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "before": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "after": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "attempts": {
+        "minimum": 1,
+        "maximum": 3,
+        "type": "integer"
+      }
+    }
+  },
+  "AuthorRulesFailure": {
+    "type": "object",
+    "required": [
+      "error",
+      "prompt",
+      "attempts",
+      "last_candidate",
+      "validation_errors",
+      "message"
+    ],
+    "properties": {
+      "error": {
+        "const": "authoring_failed",
+        "type": "string"
+      },
+      "prompt": {
+        "type": "string"
+      },
+      "attempts": {
+        "minimum": 1,
+        "maximum": 3,
+        "type": "integer"
+      },
+      "last_candidate": {},
+      "validation_errors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "path",
+            "code",
+            "message"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "hint": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "message": {
+        "type": "string"
+      }
+    }
+  },
+  "PreviewDeployResponse": {
+    "type": "object",
+    "required": [
+      "server_id",
+      "from_version",
+      "to_version",
+      "content_digest",
+      "diff",
+      "estimated_window",
+      "quota_impact",
+      "rollback_target"
+    ],
+    "properties": {
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "from_version": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "to_version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "content_digest": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "description": "SHA-256 over RFC 8785 canonical JSON, prefixed with the algorithm",
+        "type": "string"
+      },
+      "diff": {
+        "type": "object",
+        "required": [
+          "server_id",
+          "from_version",
+          "to_version",
+          "entries"
+        ],
+        "properties": {
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "from_version": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to_version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "rule_id",
+                "summary",
+                "before",
+                "after"
+              ],
+              "properties": {
+                "kind": {
+                  "anyOf": [
+                    {
+                      "const": "added",
+                      "type": "string"
+                    },
+                    {
+                      "const": "removed",
+                      "type": "string"
+                    },
+                    {
+                      "const": "changed",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "rule_id": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "before": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "after": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "estimated_window": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "measured",
+              "player_visible_ms",
+              "measured_at"
+            ],
+            "properties": {
+              "measured": {
+                "const": true,
+                "type": "boolean"
+              },
+              "player_visible_ms": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "measured_at": {
+                "format": "date-time",
+                "description": "ISO-8601 UTC timestamp",
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "measured",
+              "player_visible_ms",
+              "note"
+            ],
+            "properties": {
+              "measured": {
+                "const": false,
+                "type": "boolean"
+              },
+              "player_visible_ms": {
+                "const": "unmeasured",
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "quota_impact": {
+        "type": "object",
+        "required": [
+          "candidate_cpu_millicores",
+          "candidate_memory_mib",
+          "candidate_storage_mib",
+          "headroom_available"
+        ],
+        "properties": {
+          "candidate_cpu_millicores": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "candidate_memory_mib": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "candidate_storage_mib": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "headroom_available": {
+            "type": "boolean"
+          }
+        }
+      },
+      "rollback_target": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "DeployRequest": {
+    "type": "object",
+    "required": [
+      "rule_set_version"
+    ],
+    "properties": {
+      "rule_set_version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "approval_token": {
+        "type": "string"
+      }
+    }
+  },
+  "DeployResponse": {
+    "type": "object",
+    "required": [
+      "deployment"
+    ],
+    "properties": {
+      "deployment": {
+        "type": "object",
+        "required": [
+          "deployment_id",
+          "server_id",
+          "from_version",
+          "to_version",
+          "state",
+          "candidate_pod",
+          "snapshot_id",
+          "player_visible_ms",
+          "queue_position",
+          "approved_by",
+          "initiated_by",
+          "started_at",
+          "finished_at",
+          "error"
+        ],
+        "properties": {
+          "deployment_id": {
+            "pattern": "^dep_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "server_id": {
+            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "type": "string"
+          },
+          "from_version": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to_version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "state": {
+            "description": "Canonical deployment state. Engineer 2 owns this union.",
+            "anyOf": [
+              {
+                "const": "queued",
+                "type": "string"
+              },
+              {
+                "const": "building",
+                "type": "string"
+              },
+              {
+                "const": "staging",
+                "type": "string"
+              },
+              {
+                "const": "presync",
+                "type": "string"
+              },
+              {
+                "const": "freezing",
+                "type": "string"
+              },
+              {
+                "const": "verifying",
+                "type": "string"
+              },
+              {
+                "const": "cutover",
+                "type": "string"
+              },
+              {
+                "const": "draining",
+                "type": "string"
+              },
+              {
+                "const": "idle",
+                "type": "string"
+              },
+              {
+                "const": "aborted",
+                "type": "string"
+              },
+              {
+                "const": "failed",
+                "type": "string"
+              }
+            ]
+          },
+          "candidate_pod": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "player_visible_ms": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "queue_position": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "initiated_by": {
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp",
+            "type": "string"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "description": "ISO-8601 UTC timestamp",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "MintApprovalRequest": {
+    "type": "object",
+    "required": [
+      "server_id",
+      "rule_set_version",
+      "content_digest",
+      "issued_to"
+    ],
+    "properties": {
+      "server_id": {
+        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "type": "string"
+      },
+      "rule_set_version": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "content_digest": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "description": "SHA-256 over RFC 8785 canonical JSON, prefixed with the algorithm",
+        "type": "string"
+      },
+      "issued_to": {
+        "description": "The principal permitted to redeem this token",
+        "type": "string"
+      }
+    }
+  },
+  "MintApprovalResponse": {
+    "type": "object",
+    "required": [
+      "token",
+      "expires_at",
+      "content_digest"
+    ],
+    "properties": {
+      "token": {
+        "type": "string"
+      },
+      "expires_at": {
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp",
+        "type": "string"
+      },
+      "content_digest": {
+        "pattern": "^sha256:[0-9a-f]{64}$",
+        "description": "SHA-256 over RFC 8785 canonical JSON, prefixed with the algorithm",
+        "type": "string"
+      }
+    }
+  }
+}

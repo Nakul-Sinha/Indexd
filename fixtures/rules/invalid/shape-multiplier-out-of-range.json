@@ -1,0 +1,4 @@
+{
+  "schema_version": 1,
+  "rules": [{ "rule": "mob_spawn_rate", "id": "way_too_many", "mob": "zombie", "multiplier": 500 }]
+}

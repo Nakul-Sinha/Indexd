@@ -218,12 +218,43 @@ The deployment controller is the product; everything else is a surface or a feed
 M0–M3 is the entire product. M1 is the falsification test: if the freeze window cannot be brought
 to a tolerable length, nothing above it is worth building.
 
+## Running the scaffold
+
+Requires Bun 1.4 or newer. Node 22 is needed later for the web and phone clients, which do not
+exist yet.
+
+```bash
+bun install && bun run test
+```
+
+Other useful commands:
+
+| Command | What it does |
+|---|---|
+| `bun run mock` | Start the mock API on port 4010 |
+| `bun run typecheck` | Typecheck every workspace |
+| `bun run lint` | Biome lint and format check |
+| `bun run schemas:check` | Fail if the generated schemas drifted from the contract types |
+| `bun run fixtures/telemetry/generate.ts` | Regenerate the recorded telemetry sample |
+
+The mock API serves scripted deployments so clients can be built before the real controller
+exists. Pick a scenario with a query parameter:
+
+```bash
+curl -X POST 'http://localhost:4010/v1/servers/srv_7f2/deploy?scenario=stall' -H 'content-type: application/json' -d '{"rule_set_version":3}'
+```
+
+`scenario` accepts `happy`, `stall`, `abort_at_verifying` and `fail_at_building`. Without an
+approval token every deploy returns the structured refusal, which is the intended behaviour and
+the thing worth looking at first.
+
 ## Documentation
 
 | Document | What it covers |
 |---|---|
 | [CONTEXT.md](CONTEXT.md) | Full project context. Read this before touching any code. |
 | [STACK.md](STACK.md) | Every technology decision, with the reason and the runner-up. |
+| [PROVISIONAL-VOCABULARY.md](PROVISIONAL-VOCABULARY.md) | The two stand-in files, why they exist, and how to swap them out. |
 | [PHASES.md](PHASES.md) | Step-by-step phases for the whole project and for each engineer. |
 | [ENGINEER-1.md](ENGINEER-1.md) | AI and agent systems — authoring, MCP, CLI, telemetry, Director. |
 | [ENGINEER-2.md](ENGINEER-2.md) | Cloud and deployment infrastructure — the mechanism. |

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule": "mob_spawn_rate",
+      "id": "hostiles_near_spawn",
+      "mob": "zombie",
+      "region": "spawn",
+      "multiplier": 0.5
+    }
+  ]
+}

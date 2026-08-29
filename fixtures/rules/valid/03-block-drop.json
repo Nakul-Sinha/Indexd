@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule": "block_drop",
+      "id": "stone_gives_coal",
+      "block": "stone",
+      "region": "mining_world",
+      "drops": [{ "item": "coal", "count": 1, "chance": 0.05 }],
+      "replace_default": false
+    }
+  ]
+}

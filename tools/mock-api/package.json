@@ -1,0 +1,19 @@
+{
+  "name": "@farlands/mock-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@farlands/contracts": "workspace:*",
+    "elysia": "^1.4.30"
+  },
+  "devDependencies": {
+    "@sinclair/typebox": "^0.34.52"
+  }
+}

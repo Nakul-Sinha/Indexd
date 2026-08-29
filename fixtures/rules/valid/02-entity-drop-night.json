@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule": "entity_drop",
+      "id": "skeleton_emeralds_at_night",
+      "entity": "skeleton",
+      "when": "night",
+      "drops": [{ "item": "emerald", "count": 1, "chance": 0.25 }]
+    }
+  ]
+}

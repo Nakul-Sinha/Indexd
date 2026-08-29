@@ -1,0 +1,293 @@
+[
+  {
+    "name": "list_servers",
+    "class": "read",
+    "description": "List the servers you own, with live status and player counts.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_server",
+    "class": "read",
+    "description": "Get one server: state, address, player count, TPS, and quota position.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_world_telemetry",
+    "class": "read",
+    "description": "Aggregated world activity for a server you own. Returns rolling windows, never raw events. This is a behavioural record of named players; treat it as personal data.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id",
+        "window"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "window": {
+          "default": "1h",
+          "anyOf": [
+            {
+              "const": "1h",
+              "type": "string"
+            },
+            {
+              "const": "6h",
+              "type": "string"
+            },
+            {
+              "const": "24h",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "get_deployment",
+    "class": "read",
+    "description": "State of a deployment, using the canonical deployment state names.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "deployment_id"
+      ],
+      "properties": {
+        "deployment_id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "list_rule_sets",
+    "class": "read",
+    "description": "Rule set history for a server you own.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_rule_set",
+    "class": "read",
+    "description": "One rule set version: the document, its digest, its source, and its author.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id",
+        "version"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    }
+  },
+  {
+    "name": "diff_rule_sets",
+    "class": "read",
+    "description": "Semantic diff between two rule set versions, rendered as sentences rather than a JSON patch.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id",
+        "from_version",
+        "to_version"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "from_version": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "to_version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    }
+  },
+  {
+    "name": "author_rules",
+    "class": "draft",
+    "description": "Turn a plain English description into a validated rule document and store it as a new version. Deploys nothing. Rate limited.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id",
+        "prompt"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "prompt": {
+          "minLength": 1,
+          "maxLength": 4000,
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "preview_deploy",
+    "class": "draft",
+    "description": "Dry run a deployment: semantic diff, estimated player-visible window, quota impact, and rollback target. No live effect.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id",
+        "version"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    }
+  },
+  {
+    "name": "deploy_rules",
+    "class": "act",
+    "description": "Deploy a rule set version to a live world. Requires an approval token minted by a human against the exact content digest. Without one this returns a structured refusal and changes nothing.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id",
+        "version"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "approval_token": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "rollback",
+    "class": "act",
+    "description": "Deploy the previous rule version onto the current world. Play since the change is preserved. This stops the rule acting further; it does not undo what the rule already did. Requires an approval token.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "approval_token": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "create_server",
+    "class": "act",
+    "description": "Provision a new server. This is a cluster operation and is not undone by rollback. Requires an approval token.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "maxLength": 64,
+          "type": "string"
+        },
+        "approval_token": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "power_action",
+    "class": "act",
+    "description": "Start, stop, or restart a server. A stop disconnects every connected player and no snapshot undoes that. Requires an approval token.",
+    "inputSchema": {
+      "type": "object",
+      "required": [
+        "server_id",
+        "action"
+      ],
+      "properties": {
+        "server_id": {
+          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "type": "string"
+        },
+        "action": {
+          "anyOf": [
+            {
+              "const": "start",
+              "type": "string"
+            },
+            {
+              "const": "stop",
+              "type": "string"
+            },
+            {
+              "const": "restart",
+              "type": "string"
+            }
+          ]
+        },
+        "approval_token": {
+          "type": "string"
+        }
+      }
+    }
+  }
+]

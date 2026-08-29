@@ -1,0 +1,4 @@
+{
+  "schema_version": 1,
+  "rules": [{ "rule": "damage_modifier", "id": "no_damage", "target": "player", "multiplier": 0 }]
+}

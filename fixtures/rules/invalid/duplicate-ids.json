@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "rules": [
+    { "rule": "gamerule", "id": "same_id", "name": "keep_inventory", "value": true },
+    { "rule": "gamerule", "id": "same_id", "name": "mob_griefing", "value": false }
+  ]
+}

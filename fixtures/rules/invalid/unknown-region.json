@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "rules": [
+    {
+      "rule": "mob_spawn_rate",
+      "id": "hostiles_in_the_castle",
+      "mob": "zombie",
+      "region": "castle",
+      "multiplier": 1.5
+    }
+  ]
+}

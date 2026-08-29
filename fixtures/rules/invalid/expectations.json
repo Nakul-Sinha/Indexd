@@ -1,0 +1,9 @@
+{
+  "unknown-region.json": ["unknown_region"],
+  "duplicate-ids.json": ["duplicate_rule_id"],
+  "forbidden-gamerule.json": ["gamerule_not_permitted"],
+  "player-invulnerable.json": ["multiplier_disables_damage"],
+  "unreachable-drops.json": ["drops_unreachable"],
+  "shape-missing-id.json": ["shape"],
+  "shape-multiplier-out-of-range.json": ["shape"]
+}
