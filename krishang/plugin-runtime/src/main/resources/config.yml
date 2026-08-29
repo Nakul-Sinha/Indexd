@@ -21,3 +21,34 @@ onPlayerAction:
     title: "Miner"
     description: "Break your first diamond ore"
     soundEffect: "ENTITY_PLAYER_LEVELUP"
+
+telemetry:
+  enabled: true
+
+  # The backend Service, reached from inside the cluster. The ingest endpoint is
+  # cluster-internal and refuses anything that arrived through an edge proxy, so
+  # this is never a public address.
+  endpoint: "http://farlands-backend.dev-deployment.svc.cluster.local:3001"
+
+  # Templated in per deployment. Left blank, telemetry stays off, which is what a
+  # JAR built or run outside a deployment should do.
+  serverId: ""
+
+  # Batch size is capped at 1000 by the ingest contract.
+  batchSize: 200
+  flushSeconds: 15
+  requestTimeoutSeconds: 5
+
+  # The bound on how much an ingest outage may cost the server. Once it is full
+  # the oldest events are dropped: losing telemetry is always preferable to
+  # degrading the game.
+  queueCapacity: 10000
+
+  # How often a player's whereabouts are sampled, for time in region.
+  regionSampleSeconds: 30
+
+  # Worlds to region names, so telemetry names a place the way a rule does. A
+  # world with no entry uses its own name when that is already a valid region
+  # name, and is otherwise reported without a region.
+  regions:
+    world: spawn

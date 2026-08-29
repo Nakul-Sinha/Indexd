@@ -45,5 +45,8 @@ player-authored text never reaches a log line.
   (Engineer 3); this module requests the table by pull request rather than forking the
   sequence. Swap `InMemoryRollupStore` for the Drizzle implementation of `RollupStore` when it
   lands; nothing else changes.
-- The Java emitter under `plugin-runtime/`. Deferred: the project targets Java 25 and this
-  environment has Java 17 with no Maven, so it could not be compiled or tested.
+- The Java emitter. It lives in `krishang/plugin-runtime/src/main/java/com/farlands/telemetry/`
+  and is the other side of this seam: it produces the NDJSON that `events.ts` validates. Its
+  tests assert byte equality against `fixtures/telemetry/session-01.ndjson`, the same recorded
+  batch the tests here read, so the two halves are pinned to one artefact rather than to each
+  other.
