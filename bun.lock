@@ -62,6 +62,10 @@
         "@sinclair/typebox": "^0.34.52",
       },
     },
+    "tools/pr-gatekeeper": {
+      "name": "@farlands/pr-gatekeeper",
+      "version": "0.1.0",
+    },
   },
   "packages": {
     "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.122.0", "", { "dependencies": { "json-schema-to-ts": "^3.1.1", "standardwebhooks": "^1.0.0" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-GGPNftt0caaz9MDlmNQGHX8855Ojaduyy5pm9Sm1h7HalCn0cWNb5/bweadJF+4yzbal+QL6ztBa09WAAOzLmQ=="],
@@ -99,6 +103,8 @@
     "@farlands/mcp": ["@farlands/mcp@workspace:apps/mcp"],
 
     "@farlands/mock-api": ["@farlands/mock-api@workspace:tools/mock-api"],
+
+    "@farlands/pr-gatekeeper": ["@farlands/pr-gatekeeper@workspace:tools/pr-gatekeeper"],
 
     "@hono/node-server": ["@hono/node-server@2.1.1", "", { "peerDependencies": { "hono": "^4" } }, "sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg=="],
 

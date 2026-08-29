@@ -1,8 +1,8 @@
-# ENGINEER 3 — Platform Core & Human Surfaces ("the product")
+# ENGINEER 3: Platform Core & Human Surfaces ("the product")
 
 This is your complete work order. It assumes you have read `CONTEXT.md`. It is written so
 you can work for the whole project without asking Engineer 1 (AI & Agent Systems) or
-Engineer 2 (Cloud & Deployment Infrastructure) what to do — while being exact about what
+Engineer 2 (Cloud & Deployment Infrastructure) what to do, while being exact about what
 you consume from them and what you hand over.
 
 Baseline repository for everything lifted: `ACM-VIT/farlands` @ `main`. Both source
@@ -15,13 +15,13 @@ before trusting the inferences.
 
 ## 1. Your remit in one paragraph
 
-You own the shared spine — the type contracts, the database schema, the rule vocabulary,
-and the pipeline that turns a rule document into a deployable JAR — and every surface a
+You own the shared spine (the type contracts, the database schema, the rule vocabulary,
+and the pipeline that turns a rule document into a deployable JAR) and every surface a
 human touches: the web dashboard, the review screen, and the phone. You are also the
 keeper of the human gate: the approvals module, the single mechanism the entire safety
-argument rests on. Two of your deliverables sit on the other engineers' critical path —
-Engineer 1 cannot generate MCP tool schemas without `packages/contracts`, and Engineer 2's
-deployment controller cannot leave its `building` state without `buildRuleJar()` — so your
+argument rests on. Two of your deliverables sit on the other engineers' critical path
+(Engineer 1 cannot generate MCP tool schemas without `packages/contracts`, and Engineer 2's
+deployment controller cannot leave its `building` state without `buildRuleJar()`), so your
 build order is not negotiable: contracts and the build pipeline ship before you write a
 single line of UI.
 
@@ -32,7 +32,7 @@ single line of UI.
 | Path | Responsibility |
 |---|---|
 | `packages/contracts/` | The locked seam. Shared types for API, CLI, MCP, web, mobile. You are sole scribe; everyone else's types land here by PR to you. |
-| `packages/db/` | Drizzle schema and the migration sequence. Five new tables. Sole owner of the sequence — E1 and E2 request tables by PR. |
+| `packages/db/` | Drizzle schema and the migration sequence. Five new tables. Sole owner of the sequence; E1 and E2 request tables by PR. |
 | `packages/plugin-builder/` | The lifted eight-file pipeline, exposed as `buildRuleJar(ruleJson) -> { jarUrl, contentDigest }`. |
 | `plugin-runtime/` | The lift of the Java rule interpreter. E1 adds `telemetry/` inside it. |
 | `apps/api/` core | `auth/` extended with machine tokens; `approvals/`; `rules/` registry; `servers/` lifecycle and deployment states; SSE events; logs. |
@@ -92,12 +92,12 @@ screen that two blocked engineers are waiting behind is a net negative.
 
 ---
 
-## 4. Component 1: `packages/contracts` — the locked seam
+## 4. Component 1: `packages/contracts`, the locked seam
 
 **Lift/extend source:** new package; shapes derived from `backend/src/modules/` DTOs and
 the plugin-builder `types.ts` in the baseline.
 
-Four clients consume this API — the web app, the CLI, the MCP server, and the phone — and
+Four clients consume this API (the web app, the CLI, the MCP server, and the phone), and
 a shared type package is what keeps them from drifting apart. That is the entire reason
 this package exists, and it is why it is small but load-bearing.
 
@@ -124,10 +124,10 @@ E1 works from these fixtures until your API is live; your mock API serves them.
 
 ---
 
-## 5. Component 2: `packages/db` — schema and the migration sequence
+## 5. Component 2: `packages/db`, schema and the migration sequence
 
-**Lift source:** `packages/db/` in the baseline — Drizzle schema and migrations,
-currently through head `0005`.
+**Lift source:** `packages/db/` in the baseline (Drizzle schema and migrations,
+currently through head `0005`).
 
 You are **sole owner of the migration sequence**. E1 and E2 request tables and columns by
 PR to you; nobody else writes a migration file, ever, because two engineers writing
@@ -140,7 +140,7 @@ Conventions, inherited from the baseline and not optional:
   by `game_servers_user_active_name_idx` on `(user_id, name) where current_state <>
   'deleted'`.
 - Note the constraint that index already enforces: **active server names are unique per
-  user**. A candidate pod provisioned during a deployment must not collide with it —
+  user**. A candidate pod provisioned during a deployment must not collide with it:
   agree the candidate naming scheme with E2 before they provision their first pod B.
 
 ### The five new tables (P2 §4.1)
@@ -150,15 +150,15 @@ Conventions, inherited from the baseline and not optional:
 | `rule_set_versions` | `id, rule_set_id, version, json_url, content_digest, built_jar_url, source, source_prompt, created_by, created_at` | One row per rule-set version. `source` is `form \| agent \| director`. Rollback targets a row here. `content_digest` is what approval binds to. |
 | `deployments` | `id, server_id, from_version, to_version, state, candidate_pod, snapshot_id, player_visible_ms, approved_by, approval_token_hash, initiated_by, started_at, finished_at, error` | One row per attempt, **including failures**. `state` mirrors the controller state machine. Reconciled against Kubernetes on backend restart, exactly as the backup module reconciles Jobs. **This table is the audit log of record.** |
 | `approval_tokens` | `token_hash, server_id, rule_set_version, content_digest, issued_to, issued_by, issued_at, expires_at, consumed_at` | Store the hash, never the token. Single-use enforced by `consumed_at`; redemption checks `issued_to` against the calling principal and `content_digest` against the freshly built artefact. |
-| `world_events_rollup` | `server_id, window_start, window_end, metrics jsonb` | Aggregated telemetry. Deliberately not raw events — raw events grow without bound and nothing reads them. E1 writes into it; you own its shape. |
+| `world_events_rollup` | `server_id, window_start, window_end, metrics jsonb` | Aggregated telemetry. Deliberately not raw events: raw events grow without bound and nothing reads them. E1 writes into it; you own its shape. |
 | `proposals` | `id, server_id, suggested_rules jsonb, rationale, confidence, status, reviewed_by, reviewed_at, rejection_reason` | Director output awaiting approval. Rejection reasons are the most useful signal in the system; the schema exists to capture them. |
 
-### Two structural rules — say them loudly, enforce them in code
+### Two structural rules: say them loudly, enforce them in code
 
 1. **`rule_set_versions` is append-only, and the S3 objects behind `json_url` are
    write-once.** A changed rule is a new row, and a new version needs a new approval.
-   There is no update path, no upsert, no "fix the draft in place". This is not tidiness
-   — it is the load-bearing half of the time-of-check/time-of-use defence in section 8.
+   There is no update path, no upsert, no "fix the draft in place". This is not tidiness;
+   it is the load-bearing half of the time-of-check/time-of-use defence in section 8.
    If a version row or its S3 object can be rewritten after a human approved its diff,
    the entire safety argument is decorative.
 2. **`deployments` stores `approval_token_hash`, never a raw token**, as a foreign key
@@ -168,7 +168,7 @@ Conventions, inherited from the baseline and not optional:
 
 ---
 
-## 6. Component 3: `packages/plugin-builder` — the lifted pipeline
+## 6. Component 3: `packages/plugin-builder`, the lifted pipeline
 
 **Lift sources:** `farlands-app/src/lib/plugin-builder/` (seven files) and
 `farlands-app/src/app/api/plugin-builder/` (the assembly entry point).
@@ -184,14 +184,14 @@ eight-file pipeline:
 
 | File | Role |
 |---|---|
-| `types.ts` | The rule schema — the vocabulary. `[CONFIRM]` |
+| `types.ts` | The rule schema: the vocabulary. `[CONFIRM]` |
 | `validation.ts` | Validates a rule document against the schema. The only path in. |
 | `jar-builder.ts` | Injects rule JSON into a copy of the template JAR. `[CONFIRM]` |
 | `runtime-jar.ts` | Fetches the base template JAR from blob storage. |
 | `yaml-generator.ts` | Emits the plugin descriptor. |
 | `s3-config.ts` | Bucket/prefix configuration. |
 | `s3-storage.ts` | Persists rule JSON and built JARs to S3. |
-| `json-builder.ts` + `route.ts` | The assembly entry point — sits under `app/api/plugin-builder/`, **not** in `lib/`. It is the eighth file of the pipeline and easy to miss when copying, because it is not next to the other seven. |
+| `json-builder.ts` + `route.ts` | The assembly entry point: sits under `app/api/plugin-builder/`, **not** in `lib/`. It is the eighth file of the pipeline and easy to miss when copying, because it is not next to the other seven. |
 
 Expose one function:
 
@@ -200,7 +200,7 @@ buildRuleJar(ruleJson) -> { jarUrl, contentDigest }
 ```
 
 **The digest is computed here, at build time, from the built artefact.** It is what
-approval binds to, so it must be recomputed from what was actually built — never trusted
+approval binds to, so it must be recomputed from what was actually built: never trusted
 from the caller, never carried through from input, never cached across builds. E2's
 controller compares it against the approval token's `content_digest` and refuses on
 mismatch; that comparison is only worth anything if this function is the sole source of
@@ -211,11 +211,11 @@ the digest.
 The inventory was built by reading the repository tree and docs, not every line of code.
 Two of your files carry assumptions that everything downstream depends on:
 
-1. **`types.ts` — the rule vocabulary.** This defines what a rule can express, and
+1. **`types.ts`: the rule vocabulary.** This defines what a rule can express, and
    therefore the entire agent action space. E1 designs every MCP tool against its shape.
    Read it before locking `packages/contracts`, and walk E1 through it in your first
    integration conversation.
-2. **`jar-builder.ts` — how the JSON is injected.** Resource entry, manifest attribute,
+2. **`jar-builder.ts`: how the JSON is injected.** Resource entry, manifest attribute,
    or rewritten class? The answer determines whether a rebuild is cheap enough to sit
    inside every deployment's `building` state, or whether builds need caching. Tell E2
    what you find; it shapes their state machine's timing budget.
@@ -226,34 +226,34 @@ A Velocity backend transfer preserves the player's connection but **not server-s
 in-memory plugin state**. Anything a generated plugin holds in RAM rather than on disk is
 lost at handover. That makes statelessness a design constraint on the rule vocabulary,
 and `validation.ts` is where it is enforced: **rules must be stateless or persist through
-the world, and validation rejects anything else** — rather than E2 discovering the
+the world, and validation rejects anything else**, rather than E2 discovering the
 problem in production when a rule's counters silently reset at cutover. If the current
 vocabulary can express stateful rules, tightening this is your first real change to the
 pipeline, made as a reviewed security change.
 
 ---
 
-## 7. Component 4: `plugin-runtime` — the Java interpreter
+## 7. Component 4: `plugin-runtime`, the Java interpreter
 
-**Lift source:** the Maven project at `farlands-app/plugin-runtime/` in the baseline —
-`PluginMain.java` plus `config/`, `listeners/`, `models/`. This is the single most
+**Lift source:** the Maven project at `farlands-app/plugin-runtime/` in the baseline
+(`PluginMain.java` plus `config/`, `listeners/`, `models/`). This is the single most
 valuable asset in the repository: a generic, pre-reviewed interpreter that reads the
 injected JSON rule document and registers the Bukkit listeners it describes.
 
 **Copy wholesale into `plugin-runtime/` at the repo root. Do not restructure.** The
 template JAR is reviewed once and fixed; each rule set is a payload injected into a copy
-of it. That property — the model emits documents, a fixed runtime interprets them — is
+of it. That property (the model emits documents, a fixed runtime interprets them) is
 the safety design, and refactoring the runtime reopens it.
 
 Two things to settle in week one:
 
 1. **The package boundary with Engineer 1.** E1 adds
-   `src/main/java/com/farlands/telemetry/` — the in-world NDJSON event emitter — inside
+   `src/main/java/com/farlands/telemetry/` (the in-world NDJSON event emitter) inside
    your lift. Agree early which classes the emitter may touch (listeners it hooks, the
    config it reads) so their commits and yours do not collide inside one Maven project.
    You own the build (`pom.xml`, the template JAR release); E1 owns the `telemetry/`
    package.
-2. **`config/` — how the runtime loads its configuration. `[CONFIRM]`** If it reads from
+2. **`config/`: how the runtime loads its configuration. `[CONFIRM]`** If it reads from
    the JAR only, every rule change needs a rebuild, and the rebuild sits inside every
    deployment. If it can read an external path, a class of changes becomes a file write
    instead of a build. Open the code and find out; the answer changes the economics of
@@ -267,7 +267,7 @@ new API, not a dependency update.
 
 ---
 
-## 8. Component 5: `approvals` — the mechanism the entire safety argument rests on
+## 8. Component 5: `approvals`, the mechanism the entire safety argument rests on
 
 This module is why the platform can hand an action space to an agent and still be
 defensible. Everything else in the system can be mediocre and recovered later; if this is
@@ -291,11 +291,11 @@ wrong, the product's central claim is false. Design it narrowly.
 
 The rules, each of which closes a specific hole:
 
-- **Minted only by a human action** — in the web dashboard or the phone app, after
+- **Minted only by a human action**: in the web dashboard or the phone app, after
   seeing a semantic diff. `POST /v1/approvals` accepts a human session only, **never a
   machine token**. An agent can prepare, argue for and queue a deployment; it cannot
   mint its own permission.
-- **Bound to content, not to a name.** The token carries `content_digest` — a hash of
+- **Bound to content, not to a name.** The token carries `content_digest`: a hash of
   the exact rule JSON, and of the built JAR, that the human saw diffed. E2's controller
   recomputes the digest at `building` (via `buildRuleJar()`) and refuses on mismatch. A
   token that named a version string instead could be approved against a benign draft and
@@ -310,13 +310,13 @@ The rules, each of which closes a specific hole:
 ### The two failure modes this design exists to prevent
 
 **Time-of-check / time-of-use.** The human approves a diff rendered from a JSON document
-in S3 — but the *ungated draft tools* are what write those documents. If a
+in S3, but the *ungated draft tools* are what write those documents. If a
 `rule_set_versions` row or its S3 object can be rewritten, an agent can get approval for
 a benign v4 and have a different v4 built at deploy time. The defence has three parts and
 needs all three: version rows are **append-only**; the S3 objects behind `json_url` are
 **write-once**; and the digest is **recomputed at build time** from the artefact actually
 built, with refusal on mismatch. A changed rule is a new version, and a new version needs
-a new approval. Without this, the entire safety argument is decorative — this is the one
+a new approval. Without this, the entire safety argument is decorative; this is the one
 failure in the risk register that compromises everything.
 
 **Tiering versus injection.** Approval fatigue is real: if every trivial change needs a
@@ -325,8 +325,8 @@ auto-approval tier for "safe" rule classes, and it is the wrong fix: the Directo
 telemetry channels that carry player-authored text (chat volume today, more later), so
 **an auto-approving rule class is a class a player can reach by writing instructions in
 chat**. Tiering and "a successful injection cannot deploy anything" cannot both be true.
-So: **no auto-approval tier in v1.** Solve fatigue by **batching** — group a session's
-proposals into one review with one tap — not by tiering. If a tier is ever added it must
+So: **no auto-approval tier in v1.** Solve fatigue by **batching** (group a session's
+proposals into one review with one tap), not by tiering. If a tier is ever added it must
 be opt-in per server, restricted to classes the Director cannot reach from any channel
 carrying player-authored text, recorded with `issued_by = system`, and revoked
 automatically on any rejected proposal. That is a later project, not a v1 shortcut.
@@ -339,25 +339,25 @@ automatically on any rejected proposal. That is a later project, not a v1 shortc
 `backend/src/modules/rules/`, `backend/src/modules/servers/` in the baseline (Bun +
 Elysia, Drizzle behind it).
 
-### `auth/` — machine tokens
+### `auth/`: machine tokens
 
 The existing auth and admin surface works; lift it and extend it with **machine
 credentials**: API tokens for the CLI and the MCP server. Machine tokens authenticate E1's
-surfaces; they are deliberately less powerful than a human session — a machine token can
+surfaces; they are deliberately less powerful than a human session: a machine token can
 never call `POST /v1/approvals`, and act-class operations authenticated by one still
 require an approval token minted by a human. The CLI is a client, not a privilege
 escalation.
 
-### `rules/` — the registry
+### `rules/`: the registry
 
 Lift `backend/src/modules/rules/` essentially verbatim. The DTO is
-`{ name, description?, gameType, jsonUrl, version? }` — **a pointer to a JSON document in
+`{ name, description?, gameType, jsonUrl, version? }`, **a pointer to a JSON document in
 S3, not the document itself**. This indirection is exactly what versioning and rollback
 need: versions are rows pointing at immutable objects, diffs are computed by fetching two
 objects, and rollback is a pointer move plus a redeploy. Do not "improve" it by inlining
 the document.
 
-### `servers/` — lifecycle and deployment states
+### `servers/`: lifecycle and deployment states
 
 Extend the lifted lifecycle module with the deployment states from E2's state union so a
 server's current deployment status is queryable. E2 owns the controller and the
@@ -367,12 +367,12 @@ transitions; you own the module's read surface and the state's presence in the A
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /v1/approvals` | Mint an approval token. Human session only — never a machine token. |
+| `POST /v1/approvals` | Mint an approval token. Human session only, never a machine token. |
 | `POST /v1/servers/:id/rule-sets/author` | Plain English in, validated rule version out. Server-scoped, because a server's first rule set has no id yet, so a rule-set-scoped route cannot be the entry point. Deploys nothing. You own the route; the model work behind it is E1's `authorRules()`. |
 | `POST /v1/servers/:id/preview` | Dry run: semantic diff, estimated player-visible window, quota impact, rollback target. No live effect. |
 | `GET /v1/servers/:id/proposals` | Director proposals for review. |
 | `POST /v1/proposals/:id/approve` | Approve mints a token and starts a deployment. |
-| `POST /v1/proposals/:id/reject` | Reject records the reason — capture it; it is training signal. |
+| `POST /v1/proposals/:id/reject` | Reject records the reason: capture it; it is training signal. |
 | `GET /v1/servers/:id/events` | SSE stream with `Last-Event-ID` replay. Consumed by web, CLI and mobile. |
 | `GET /v1/servers/:id/logs` | Server console log stream, backing `farlands logs --follow`. |
 
@@ -399,14 +399,14 @@ shapes still live in your contracts package.
 
 ## 10. Component 7: the web dashboard
 
-**Extend source:** `farlands-app/src/app/(dashboard)/` and `components/` — the existing
+**Extend source:** `farlands-app/src/app/(dashboard)/` and `components/`, the existing
 Next.js app with Better Auth and Google OAuth. Also lift `farlands-app/src/lib/modrinth/`;
 browsing the existing plugin ecosystem stays useful and is the natural surface for a
-rule-set marketplace later (later — see section 14).
+rule-set marketplace later (later; see section 14).
 
 Three deliverables, in this order:
 
-### The review screen — the centrepiece
+### The review screen, the centrepiece
 
 A comparison of two JSON documents fetched from S3 by `jsonUrl`, rendered
 **semantically**:
@@ -416,7 +416,7 @@ hostile spawns near spawn:   0.5x -> 1.4x
 skeleton drops:              + emerald (night only)
 ```
 
-**Never a raw JSON patch.** A diff nobody can read is a gate nobody uses — and if the
+**Never a raw JSON patch.** A diff nobody can read is a gate nobody uses, and if the
 gate is unusable, owners will find a way around it, which deletes the safety property.
 The semantic renderer walks the rule vocabulary from `types.ts` and produces one plain
 line per changed rule; anything it cannot render semantically is a renderer bug to fix,
@@ -427,8 +427,8 @@ review with one approval, per section 8.
 
 ### Deployment progress
 
-A live view over the SSE stream: current state, states completed, and — because
-deployments serialise behind E2's cluster-wide queue — **queue position**, so a
+A live view over the SSE stream: current state, states completed, and, because
+deployments serialise behind E2's cluster-wide queue, **queue position**, so a
 deployment waiting for headroom is visibly queued rather than silently stuck in
 `staging`. Show `player_visible_ms` after completion; the honest number, whatever M1
 made it.
@@ -443,14 +443,14 @@ goes through review and approval like every other source.
 
 ## 11. Component 8: the phone client
 
-**New:** `apps/mobile/` — Expo / React Native, a proven Expo and Node stack. Push via
+**New:** `apps/mobile/`, Expo / React Native, a proven Expo and Node stack. Push via
 Expo notifications. SSE with a `Last-Event-ID` replay buffer rather than long-polling, so
 a phone that loses signal in a lift resumes rather than restarts.
 
 Why a phone client at all: the person who owns a Minecraft server is very often a
 teenager with a phone, not an engineer at a desk. If approving a change requires a
 laptop, the Director's proposals sit unread and the loop never closes. The phone closes
-the human-in-the-loop gate in seconds rather than hours — the difference between a
+the human-in-the-loop gate in seconds rather than hours, the difference between a
 safety mechanism that works and one that gets disabled because it is annoying.
 
 **Four screens, no more** (P2 §3.8):
@@ -458,13 +458,13 @@ safety mechanism that works and one that gets disabled because it is annoying.
 | Screen | Contents |
 |---|---|
 | Servers | List with live status, player count, TPS. Start, stop, and the address to share. |
-| World feed | Server-sent events from the running world — joins, notable events, deployment progress. The same events the Director's rollups are computed from. |
+| World feed | Server-sent events from the running world: joins, notable events, deployment progress. The same events the Director's rollups are computed from. |
 | Proposals | Director suggestions arriving as push notifications. Semantic diff, rationale, confidence. Approve mints the token; reject records why, which is training signal. |
 | Rollback | Deployment history with one-tap rule rollback. The panic button in the pocket of the person standing in the world that went wrong. |
 
 **The app is read-plus-approve. No authoring on the phone, deliberately.** Authoring
 happens on the web or through an agent; the phone is where a human decides. The division
-is not a resourcing compromise — the phone is the gate, and a gate with an authoring
+is not a resourcing compromise: the phone is the gate, and a gate with an authoring
 surface attached is a gate people will use to rubber-stamp their own drafts.
 
 ---
@@ -479,7 +479,7 @@ player data. Present them as differently as they behave:
 | What it is | Deploys the previous rule version onto the current world. Mechanically an ordinary deployment with source and target reversed. | Restores the retained world snapshot from before the change. |
 | Play since the change | **Preserved.** | **Discarded.** |
 | When | Almost always. The default. | Only when the world itself was corrupted or griefed. Disaster recovery. |
-| UI | The one-tap button, on the phone and the web. | Buried behind an explicit confirmation that **names the data loss** — "this discards everything players did since <time>". |
+| UI | The one-tap button, on the phone and the web. | Buried behind an explicit confirmation that **names the data loss**, "this discards everything players did since <time>". |
 
 The copy on the rule-rollback button must be honest: it stops the rule acting further; it
 **does not undo what the rule already did**. Diamonds granted stay granted, mobs cleared
@@ -494,7 +494,7 @@ and a slogan, and the honesty lands better than the overclaim would.
 |---|---|---|
 | `POST /v1/servers/:id/deploy`, `GET /v1/deployments/:id`, abort/rollback/restore, and deployment state transitions published into your SSE stream | Engineer 2 | Your mock API walks the state union on a timer and emits envelope-shaped SSE events. Web progress UI and phone feed are built entirely against this. |
 | The measured freeze window (M1) | Engineer 2 | Do not design the deployment-progress UX copy ("about N seconds") until the number exists. Build the screen; leave the number a variable. This is the one genuine serialisation in the plan. |
-| A local cluster path (kind or k3d) and a docker-compose Postgres | Engineer 2 | Plain local Postgres for migrations until it lands. You must never need the AWS account — it is E2's. |
+| A local cluster path (kind or k3d) and a docker-compose Postgres | Engineer 2 | Plain local Postgres for migrations until it lands. You must never need the AWS account; it is E2's. |
 | `authorRules(serverId, prompt)` behind your `POST /v1/servers/:id/rule-sets/author` route | Engineer 1 | Stub it to return a fixed, valid `rule_set_versions` row. The route, validation and persistence are yours and testable without the model. |
 | Director proposals to render in the Proposals UI (web and phone) | Engineer 1 | Fixture proposal rows in the `proposals` table, hand-written. The review flow does not care who authored the proposal. |
 | Telemetry rollups feeding the world feed | Engineer 1 | A recorded telemetry fixture replayed through your SSE stream. |
@@ -519,14 +519,14 @@ and a slogan, and the honesty lands better than the overclaim would.
 In order. Each item assumes the ones above it.
 
 1. `packages/contracts` locked, with fixtures. (Unblocks E1 and E2. Phase 0.)
-2. `packages/db` — the five migrations from head `0005`, append-only and write-once
+2. `packages/db`: the five migrations from head `0005`, append-only and write-once
    rules enforced. (Unblocks everyone's persistence; seam 8.)
 3. `packages/plugin-builder` lifted, `buildRuleJar()` exposed, digest recomputed.
    (Unblocks E2's `building` state.)
 4. `plugin-runtime/` lifted; template JAR pinned; package boundary agreed with E1.
 5. The mock API: contract-shaped fixtures, scripted deployment states, replayable SSE,
    fake approvals. (Unblocks all four clients.)
-6. `approvals/` — real minting, hashing, redemption checks, expiry, single-use.
+6. `approvals/`: real minting, hashing, redemption checks, expiry, single-use.
 7. API core: machine tokens, `rules/`, `servers/` states, real SSE with replay, logs.
 8. Web: the review screen with semantic diffs and approve/reject. (This is the M4
    surface.)
@@ -593,7 +593,7 @@ the gate. Below that line there is no product, only components.
 - The SSE event envelope and E2's publish interface into the stream.
 - The migration sequence: five tables live, plus the PR process for theirs.
 - Your `[CONFIRM]` findings from `types.ts`, `jar-builder.ts` and `plugin-runtime`
-  `config/` — E1 designs tools and E2 budgets the freeze window from what you find.
+  `config/`. E1 designs tools and E2 budgets the freeze window from what you find.
 
 ### You need from them
 
@@ -614,7 +614,7 @@ the gate. Below that line there is no product, only components.
    path); the retry with the same token is refused and requires a fresh approval.
 3. **One stream, three clients.** A deployment driven by E2's controller emits state
    transitions that render simultaneously in your web progress UI, E1's `farlands deploy
-   --watch` NDJSON output, and the phone world feed — and a client killed mid-deployment
+   --watch` NDJSON output, and the phone world feed, and a client killed mid-deployment
    resumes losslessly via `Last-Event-ID`.
 4. **The audit trail is complete.** After test 1, the `deployments` row carries
    `approved_by`, `approval_token_hash`, `initiated_by` and the final state, and the
@@ -622,9 +622,9 @@ the gate. Below that line there is no product, only components.
 
 ### The milestone conditions you are measured against
 
-- **M4 — Authoring + approvals.** Done when: *Someone types a sentence, sees what it
+- **M4, Authoring + approvals.** Done when: *Someone types a sentence, sees what it
   will do, approves it, and the world changes around them.*
-- **M6 — Phone client.** Done when: *A proposal arrives as a notification and is
+- **M6, Phone client.** Done when: *A proposal arrives as a notification and is
   approved from a phone while standing in the world.*
 
 M4 needs your author route, your approvals module and your review screen sitting on E2's
