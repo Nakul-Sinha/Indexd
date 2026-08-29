@@ -93,16 +93,30 @@ async function unifiedDiff(number: number): Promise<string> {
  * decision about intent, and a machine guessing at intent in a merge is how
  * changes get silently reverted.
  */
-async function resolveConflicts(branch: string): Promise<{ ok: boolean; detail: string }> {
+async function resolveConflicts(
+  branch: string,
+): Promise<{ ok: boolean; detail: string; pushed: boolean }> {
   // Conflict resolution is the one path that needs a real branch, because the
   // result has to be pushed back to it.
   await run(["git", "fetch", "origin", "main", branch]);
   const attach = await run(["git", "checkout", "--force", "-B", branch, `origin/${branch}`]);
   if (!attach.ok) {
-    return { ok: false, detail: `Could not attach to ${branch} to resolve conflicts` };
+    return {
+      ok: false,
+      detail: `Could not attach to ${branch} to resolve conflicts`,
+      pushed: false,
+    };
   }
   const merge = await run(["git", "merge", "origin/main", "--no-edit"]);
-  if (merge.ok) return { ok: true, detail: "merged origin/main cleanly" };
+  if (merge.ok) {
+    const behind = await run(["git", "rev-list", "--count", "HEAD..origin/main"]);
+    const upToDate = behind.output.trim() === "0";
+    return {
+      ok: true,
+      detail: upToDate ? "already up to date with main" : "merged origin/main cleanly",
+      pushed: !upToDate,
+    };
+  }
 
   const status = await run(["git", "diff", "--name-only", "--diff-filter=U"]);
   const conflicted = status.output.trim().split("\n").filter(Boolean);
@@ -116,6 +130,7 @@ async function resolveConflicts(branch: string): Promise<{ ok: boolean; detail: 
         conflicted.length > 0
           ? `Conflicts a machine should not resolve: ${conflicted.join(", ")}`
           : "Merge failed for a reason other than file conflicts",
+      pushed: false,
     };
   }
 
@@ -123,13 +138,13 @@ async function resolveConflicts(branch: string): Promise<{ ok: boolean; detail: 
   const install = await run(["bun", "install"]);
   if (!install.ok) {
     await run(["git", "merge", "--abort"]);
-    return { ok: false, detail: "Regenerating bun.lock failed" };
+    return { ok: false, detail: "Regenerating bun.lock failed", pushed: false };
   }
   await run(["git", "add", "bun.lock"]);
   const commit = await run(["git", "commit", "--no-edit"]);
   return commit.ok
-    ? { ok: true, detail: "Resolved a bun.lock conflict by regenerating it" }
-    : { ok: false, detail: "Could not commit the regenerated lockfile" };
+    ? { ok: true, detail: "Resolved a bun.lock conflict by regenerating it", pushed: true }
+    : { ok: false, detail: "Could not commit the regenerated lockfile", pushed: false };
 }
 
 function renderComment(result: GateResult): string {
@@ -191,15 +206,17 @@ export async function gatePullRequest(pr: ListedPr, options: GateOptions): Promi
   }
   await run(["git", "clean", "-fd"]);
 
-  let conflictNote = "";
-  if (pr.mergeable === "CONFLICTING") {
-    const resolved = await resolveConflicts(pr.headRefName);
-    conflictNote = ` ${resolved.detail}.`;
-    if (!resolved.ok) {
-      return { ...base, outcome: "conflict_unresolved", reason: resolved.detail };
-    }
-    if (!options.dryRun) await run(["git", "push"]);
+  // Always test the merge result, never the branch as it stands. A branch cut
+  // before a fix landed on main can pass on its own base and fail once merged,
+  // which is the exact failure a gate exists to catch.
+  const resolved = await resolveConflicts(pr.headRefName);
+  const conflictNote = ` ${resolved.detail}.`;
+  if (!resolved.ok) {
+    return { ...base, outcome: "conflict_unresolved", reason: resolved.detail };
   }
+  // Push only when the merge actually produced a commit, so an up to date
+  // branch is not touched.
+  if (!options.dryRun && resolved.pushed) await run(["git", "push"]);
 
   const gates: Record<string, boolean> = {};
   for (const [name, command] of Object.entries(QUALITY_GATES)) {
