@@ -26,13 +26,25 @@ comment at the top of the script, and every run appends to `gate.log`.
 
 ## What happens per pull request
 
-1. Fetch `pull/N/head` and check it out detached. Detached throughout, because a named checkout
-   fails whenever another worktree holds that branch, which is normal with parallel agents.
-2. Merge `origin/main`. It always tests the merge result rather than the branch as it stands: a
-   branch cut before a fix landed can pass on its own base and fail once merged.
-3. Run `install`, `lint`, `typecheck`, `test`, `schemas:check`.
-4. Audit the diff.
-5. Comment the result. Merge only if every gate passed and policy allows it.
+1. Audit the diff. No checkout, no dependencies, no install.
+2. Read the check results that GitHub Actions already produced for the pull request.
+3. Comment the result. Merge only if the checks passed, the audit is clean, and policy allows it.
+
+Only a conflicting pull request is checked out, and only so the conflict can be resolved and
+pushed back by refspec.
+
+### Why it reads CI rather than running the suite
+
+It used to run `install`, `lint`, `typecheck`, `test` and `schemas:check` locally. That put a
+package manager on the critical path of every merge decision, and `bun install` on this machine
+intermittently produces broken symlinks and half extracted packages (issue 26). The result was the
+worst kind of gate failure: it blocked correct pull requests, and the reason it reported
+(`typecheck failed`) pointed at the code rather than at the environment.
+
+GitHub Actions already runs the same commands on a clean Linux runner, against the merge result,
+for every pull request. That is a better answer to "does this pass" than anything reproducible
+here. A pull request with no checks at all is blocked, not merged: an empty check list is not a
+passing one.
 
 ## What it will not merge
 

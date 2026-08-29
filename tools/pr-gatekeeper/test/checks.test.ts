@@ -8,6 +8,7 @@ import {
   checkInvariants,
   checkTestsAccompanySource,
 } from "../src/checks.ts";
+import { summariseChecks } from "../src/ci.ts";
 import { decide } from "../src/policy.ts";
 
 const diff = (body: string) =>
@@ -242,5 +243,54 @@ describe("auditDiff", () => {
     expect(
       auditDiff(diff("+const x = 1;"), ["apps/cli/src/a.ts", "apps/cli/test/a.test.ts"]),
     ).toHaveLength(0);
+  });
+});
+
+describe("continuous integration status", () => {
+  test("no checks is not the same as passing", () => {
+    // A pull request nothing verified must not merge on the strength of an
+    // empty check list.
+    expect(summariseChecks([]).state).toBe("none");
+  });
+
+  test("all passing reports passing", () => {
+    const status = summariseChecks([
+      { name: "TypeScript", bucket: "pass" },
+      { name: "Fixtures", bucket: "pass" },
+    ]);
+    expect(status.state).toBe("passing");
+    expect(status.detail).toContain("2 checks");
+  });
+
+  test("anything failing outranks anything pending", () => {
+    // Otherwise a pull request with one failed job and one still running waits
+    // forever on the job that cannot change the answer.
+    const status = summariseChecks([
+      { name: "TypeScript", bucket: "fail" },
+      { name: "Fixtures", bucket: "pending" },
+    ]);
+    expect(status.state).toBe("failing");
+    expect(status.detail).toContain("TypeScript");
+  });
+
+  test("pending while nothing has failed reports pending", () => {
+    const status = summariseChecks([
+      { name: "TypeScript", bucket: "pass" },
+      { name: "Fixtures", bucket: "pending" },
+    ]);
+    expect(status.state).toBe("pending");
+    expect(status.detail).toContain("Fixtures");
+  });
+
+  test("a waiting bucket counts as pending", () => {
+    expect(summariseChecks([{ name: "Deploy", bucket: "waiting" }]).state).toBe("pending");
+  });
+
+  test("skipped checks do not block a merge", () => {
+    const status = summariseChecks([
+      { name: "TypeScript", bucket: "pass" },
+      { name: "Optional", bucket: "skipping" },
+    ]);
+    expect(status.state).toBe("passing");
   });
 });

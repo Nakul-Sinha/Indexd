@@ -1,14 +1,14 @@
 import { $ } from "bun";
 import { auditDiff, blockers, type Finding } from "./checks.ts";
+import { type CiStatus, summariseChecks } from "./ci.ts";
 import { decide, type PullRequestFacts } from "./policy.ts";
 
 /**
  * The gatekeeper run loop.
  *
- * For each open pull request: fetch it, resolve conflicts with main if it has
- * any, run the full quality gate, run the mechanical audit, then merge or
- * comment. It never merges on a failure and never merges what policy.ts says a
- * human owns.
+ * For each open pull request: audit its diff, read its continuous integration
+ * result, then merge or comment. Only a conflicting pull request is checked out
+ * at all, and only so the conflict can be resolved and pushed back.
  *
  * Untrusted input, stated plainly: the title, body, branch name and diff are all
  * written by whoever opened the pull request. Nothing here interprets any of
@@ -27,10 +27,10 @@ export interface GateResult {
   number: number;
   title: string;
   author: string;
-  outcome: "merged" | "blocked" | "skipped" | "conflict_unresolved";
+  outcome: "merged" | "blocked" | "skipped" | "waiting" | "conflict_unresolved";
   reason: string;
   findings: Finding[];
-  gates: Record<string, boolean>;
+  ci: CiStatus | null;
 }
 
 interface ListedPr {
@@ -41,14 +41,6 @@ interface ListedPr {
   headRefName: string;
   mergeable: string;
 }
-
-const QUALITY_GATES: Record<string, string[]> = {
-  install: ["bun", "install", "--frozen-lockfile"],
-  lint: ["bun", "run", "lint"],
-  typecheck: ["bun", "run", "typecheck"],
-  test: ["bun", "run", "test"],
-  schemas: ["bun", "run", "schemas:check"],
-};
 
 async function run(command: string[]): Promise<{ ok: boolean; output: string }> {
   const [head, ...rest] = command;
@@ -86,44 +78,60 @@ async function unifiedDiff(number: number): Promise<string> {
 }
 
 /**
- * Bring the checked out head up to date with main, in detached HEAD.
- *
- * Detached throughout on purpose. Checking the branch out by name fails
- * whenever it is checked out in another worktree, which is normal here, and
- * nothing in this path needs a branch name: the merge happens on the commit,
- * and the result is pushed back with an explicit refspec.
+ * gh pr checks exits non zero whenever anything is failing or pending, so the
+ * exit code carries nothing the payload does not. Parse the payload.
+ */
+async function ciStatus(number: number): Promise<CiStatus> {
+  const result = await $`gh pr checks ${number} --json name,bucket`.quiet().nothrow();
+  const text = result.stdout.toString().trim();
+  if (!text) return summariseChecks([]);
+  try {
+    return summariseChecks(JSON.parse(text));
+  } catch {
+    return { state: "none", detail: "could not read check results" };
+  }
+}
+
+/**
+ * Resolve a conflict against main and push the result back.
  *
  * The only conflict resolved automatically is bun.lock, because it is generated
  * and regenerating it is deterministic. Every other conflict is a decision about
  * intent, and a machine guessing at intent in a merge is how changes get
  * silently reverted.
+ *
+ * Detached throughout, and pushed by refspec: checking the branch out by name
+ * fails whenever another worktree holds it, which is normal with parallel
+ * agents.
  */
-const NEWLINE = String.fromCharCode(10);
-
-async function bringUpToDate(): Promise<{ ok: boolean; detail: string; changed: boolean }> {
-  await run(["git", "fetch", "origin", "main"]);
-
-  const behind = await run(["git", "rev-list", "--count", "HEAD..origin/main"]);
-  if (behind.output.trim() === "0") {
-    return { ok: true, detail: "already up to date with main", changed: false };
-  }
+async function resolveConflict(
+  number: number,
+  branch: string,
+  dryRun: boolean,
+): Promise<{ ok: boolean; detail: string }> {
+  await run(["git", "fetch", "origin", "main", `pull/${number}/head`, "--force"]);
+  const detach = await run(["git", "checkout", "--detach", "--force", "FETCH_HEAD"]);
+  if (!detach.ok) return { ok: false, detail: "could not check the head out" };
+  await run(["git", "clean", "-fd"]);
 
   const merge = await run(["git", "merge", "origin/main", "--no-edit"]);
-  if (merge.ok) return { ok: true, detail: "merged origin/main cleanly", changed: true };
+  if (merge.ok) {
+    if (!dryRun) await run(["git", "push", "origin", `HEAD:refs/heads/${branch}`]);
+    return { ok: true, detail: "merged main cleanly" };
+  }
 
   const status = await run(["git", "diff", "--name-only", "--diff-filter=U"]);
-  const conflicted = status.output.trim().split(NEWLINE).filter(Boolean);
+  const conflicted = status.output.trim().split(/\r?\n/).filter(Boolean);
   const onlyLockfile = conflicted.length > 0 && conflicted.every((file) => file === "bun.lock");
 
   if (!onlyLockfile) {
     await run(["git", "merge", "--abort"]);
     return {
       ok: false,
-      changed: false,
       detail:
         conflicted.length > 0
-          ? `Conflicts a machine should not resolve: ${conflicted.join(", ")}`
-          : "Merge failed for a reason other than file conflicts",
+          ? `conflicts a machine should not resolve: ${conflicted.join(", ")}`
+          : "merge failed for a reason other than file conflicts",
     };
   }
 
@@ -131,22 +139,23 @@ async function bringUpToDate(): Promise<{ ok: boolean; detail: string; changed: 
   const install = await run(["bun", "install"]);
   if (!install.ok) {
     await run(["git", "merge", "--abort"]);
-    return { ok: false, detail: "Regenerating bun.lock failed", changed: false };
+    return { ok: false, detail: "regenerating bun.lock failed" };
   }
   await run(["git", "add", "bun.lock"]);
   const commit = await run(["git", "commit", "--no-edit"]);
-  return commit.ok
-    ? { ok: true, detail: "resolved a bun.lock conflict by regenerating it", changed: true }
-    : { ok: false, detail: "Could not commit the regenerated lockfile", changed: false };
+  if (!commit.ok) return { ok: false, detail: "could not commit the regenerated lockfile" };
+
+  if (!dryRun) await run(["git", "push", "origin", `HEAD:refs/heads/${branch}`]);
+  return { ok: true, detail: "resolved a bun.lock conflict by regenerating it" };
 }
 
 function renderComment(result: GateResult): string {
   const lines: string[] = ["## Gatekeeper audit", ""];
 
-  const gateRows = Object.entries(result.gates)
-    .map(([name, ok]) => `| ${name} | ${ok ? "pass" : "fail"} |`)
-    .join("\n");
-  lines.push("| Gate | Result |", "|---|---|", gateRows, "");
+  lines.push(
+    `**Checks:** ${result.ci ? `${result.ci.state}, ${result.ci.detail}` : "not read"}`,
+    "",
+  );
 
   if (result.findings.length === 0) {
     lines.push("No audit findings.", "");
@@ -172,12 +181,12 @@ export async function gatePullRequest(pr: ListedPr, options: GateOptions): Promi
     files,
   };
 
-  const base: Omit<GateResult, "outcome" | "reason"> = {
+  const base = {
     number: pr.number,
     title: pr.title,
     author: pr.author.login,
-    findings: [],
-    gates: {},
+    findings: [] as Finding[],
+    ci: null as CiStatus | null,
   };
 
   const decision = decide(facts);
@@ -185,80 +194,56 @@ export async function gatePullRequest(pr: ListedPr, options: GateOptions): Promi
     return { ...base, outcome: "skipped", reason: decision.detail };
   }
 
-  // Detached on purpose. A named checkout fails when the same branch is checked
-  // out in another worktree, which is normal here: parallel agents each hold
-  // one. Testing a pull request only needs its tree, not its branch name.
-  const checkout = await run(["git", "fetch", "origin", `pull/${pr.number}/head`, "--force"]);
-  const detach = await run(["git", "checkout", "--detach", "--force", "FETCH_HEAD"]);
-  if (!checkout.ok || !detach.ok) {
-    return {
-      ...base,
-      outcome: "blocked",
-      reason: `Could not check the head out. ${detach.output.slice(-200)}`,
-    };
-  }
-  await run(["git", "clean", "-fd"]);
-
-  // Always test the merge result, never the branch as it stands. A branch cut
-  // before a fix landed on main can pass on its own base and fail once merged,
-  // which is the exact failure a gate exists to catch.
-  const updated = await bringUpToDate();
-  const conflictNote = ` Base: ${updated.detail}.`;
-  if (!updated.ok) {
-    return { ...base, outcome: "conflict_unresolved", reason: updated.detail };
-  }
-  // Push back only when the merge produced a commit, and by refspec so the
-  // branch never has to be checked out.
-  if (!options.dryRun && updated.changed) {
-    await run(["git", "push", "origin", `HEAD:refs/heads/${pr.headRefName}`]);
-  }
-
-  const gates: Record<string, boolean> = {};
-  for (const [name, command] of Object.entries(QUALITY_GATES)) {
-    const outcome = await run(command);
-    gates[name] = outcome.ok;
-    if (!outcome.ok) break;
+  let conflictNote = "";
+  if (pr.mergeable === "CONFLICTING") {
+    const resolved = await resolveConflict(pr.number, pr.headRefName, options.dryRun);
+    if (!resolved.ok) {
+      return { ...base, outcome: "conflict_unresolved", reason: resolved.detail };
+    }
+    conflictNote = ` Conflict: ${resolved.detail}.`;
   }
 
   const findings = auditDiff(await unifiedDiff(pr.number), files);
-  const failedGate = Object.entries(gates).find(([, ok]) => !ok)?.[0];
   const blocking = blockers(findings);
+  const ci = await ciStatus(pr.number);
+  const withContext = { ...base, findings, ci };
 
   let result: GateResult;
-  if (failedGate) {
+  if (blocking.length > 0) {
+    // Audit findings are reported even while checks are still running. They are
+    // what a person has to act on, and waiting to say so wastes their time.
     result = {
-      ...base,
-      gates,
-      findings,
-      outcome: "blocked",
-      reason: `The ${failedGate} gate failed.${conflictNote}`,
-    };
-  } else if (blocking.length > 0) {
-    result = {
-      ...base,
-      gates,
-      findings,
+      ...withContext,
       outcome: "blocked",
       reason: `${blocking.length} blocking audit finding(s).${conflictNote}`,
     };
+  } else if (ci.state === "pending") {
+    result = { ...withContext, outcome: "waiting", reason: `Checks are ${ci.detail}.` };
+  } else if (ci.state === "failing") {
+    result = { ...withContext, outcome: "blocked", reason: `Checks ${ci.detail}.${conflictNote}` };
+  } else if (ci.state === "none") {
+    result = {
+      ...withContext,
+      outcome: "blocked",
+      reason: `No checks ran, so nothing verifies this.${conflictNote}`,
+    };
   } else if (!decision.merge) {
-    result = { ...base, gates, findings, outcome: "blocked", reason: decision.detail };
+    result = { ...withContext, outcome: "blocked", reason: decision.detail };
   } else {
     result = {
-      ...base,
-      gates,
-      findings,
+      ...withContext,
       outcome: "merged",
-      reason: `All gates passed.${conflictNote}`,
+      reason: `Checks passed and the audit is clean.${conflictNote}`,
     };
   }
 
-  if (!options.dryRun) {
+  // A pull request whose checks are still running gets no comment, because it
+  // will be gated again in a few minutes and a comment per cycle is noise.
+  if (!options.dryRun && result.outcome !== "waiting") {
     await run(["gh", "pr", "comment", String(pr.number), "--body", renderComment(result)]);
     if (result.outcome === "merged") {
       // No --delete-branch: it tries to switch off the merged branch and fails
-      // in a detached worktree, after the merge has already happened, which
-      // reads back as a failed merge. Delete the remote ref separately instead.
+      // in a detached worktree, after the merge has already happened.
       const merged = await run(["gh", "pr", "merge", String(pr.number), "--squash"]);
       if (!merged.ok) {
         return { ...result, outcome: "blocked", reason: "Merge command failed." };
@@ -275,14 +260,11 @@ export async function gateAll(options: GateOptions): Promise<GateResult[]> {
   const selected = options.only ? open.filter((pr) => pr.number === options.only) : open;
   const results: GateResult[] = [];
 
-  // Sequential on purpose. Each pull request is checked out into the same
-  // working tree, and merging one changes the base every later one is tested
-  // against, which is the point.
+  // Sequential on purpose. Merging one changes the base every later one is
+  // measured against, which is the point.
   for (const pr of selected) {
     results.push(await gatePullRequest(pr, options));
   }
 
-  await run(["git", "checkout", "main"]);
-  await run(["git", "pull", "--ff-only"]);
   return results;
 }
