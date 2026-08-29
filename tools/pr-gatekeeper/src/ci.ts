@@ -19,9 +19,11 @@
 export interface CheckRun {
   name: string;
   bucket: string;
+  /** ISO-8601, or empty while the run is still going. */
+  completedAt?: string;
 }
 
-export type CiState = "passing" | "failing" | "pending" | "none";
+export type CiState = "passing" | "failing" | "pending" | "none" | "stale";
 
 export interface CiStatus {
   state: CiState;
@@ -66,4 +68,38 @@ export function summariseChecks(checks: readonly CheckRun[]): CiStatus {
     state: "passing",
     detail: `${passing.length} check${passing.length === 1 ? "" : "s"} passed`,
   };
+}
+
+/**
+ * Decide whether a check result still describes what merging would produce.
+ *
+ * GitHub runs pull request checks against a merge of the head and the base as
+ * of the last push, and never re-runs them when the base moves afterwards. It
+ * only labels a branch BEHIND when branch protection requires branches to be up
+ * to date, so on an unprotected repository the staleness is real and invisible.
+ *
+ * Comparing timestamps catches it: if main gained a commit after the newest
+ * check finished, the result predates the base it claims to be green against.
+ *
+ * This matters most in exactly the situation this gate creates, since it merges
+ * pull requests one at a time and every merge moves main for the rest.
+ */
+export function checksAreStale(
+  checks: readonly CheckRun[],
+  baseCommittedAt: string | null,
+): boolean {
+  if (!baseCommittedAt) return false;
+
+  const completions = checks
+    .map((check) => check.completedAt)
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Date.parse(value))
+    .filter((value) => Number.isFinite(value));
+
+  if (completions.length === 0) return false;
+
+  const base = Date.parse(baseCommittedAt);
+  if (!Number.isFinite(base)) return false;
+
+  return base > Math.max(...completions);
 }

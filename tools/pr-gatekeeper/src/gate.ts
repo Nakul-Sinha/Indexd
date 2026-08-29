@@ -1,6 +1,6 @@
 import { $ } from "bun";
 import { auditDiff, blockers, type Finding } from "./checks.ts";
-import { type CiStatus, summariseChecks } from "./ci.ts";
+import { type CheckRun, type CiStatus, checksAreStale, summariseChecks } from "./ci.ts";
 import { decide, type PullRequestFacts } from "./policy.ts";
 
 /**
@@ -81,15 +81,35 @@ async function unifiedDiff(number: number): Promise<string> {
  * gh pr checks exits non zero whenever anything is failing or pending, so the
  * exit code carries nothing the payload does not. Parse the payload.
  */
+async function baseCommittedAt(): Promise<string | null> {
+  await run(["git", "fetch", "origin", "main"]);
+  const result = await run(["git", "log", "-1", "--format=%cI", "origin/main"]);
+  const value = result.output.trim();
+  return result.ok && value ? value : null;
+}
+
 async function ciStatus(number: number): Promise<CiStatus> {
-  const result = await $`gh pr checks ${number} --json name,bucket`.quiet().nothrow();
+  const result = await $`gh pr checks ${number} --json name,bucket,completedAt`.quiet().nothrow();
   const text = result.stdout.toString().trim();
   if (!text) return summariseChecks([]);
+
+  let checks: CheckRun[];
   try {
-    return summariseChecks(JSON.parse(text));
+    checks = JSON.parse(text) as CheckRun[];
   } catch {
     return { state: "none", detail: "could not read check results" };
   }
+
+  const summary = summariseChecks(checks);
+  if (summary.state === "pending") return summary;
+
+  if (checksAreStale(checks, await baseCommittedAt())) {
+    return {
+      state: "stale",
+      detail: "these results predate the current main, so they do not describe the merge result",
+    };
+  }
+  return summary;
 }
 
 /**
@@ -219,6 +239,17 @@ export async function gatePullRequest(pr: ListedPr, options: GateOptions): Promi
     };
   } else if (ci.state === "pending") {
     result = { ...withContext, outcome: "waiting", reason: `Checks are ${ci.detail}.` };
+  } else if (ci.state === "stale") {
+    // Refreshing costs a round trip and needs the author's cooperation on a
+    // fork, so say what is needed rather than silently blocking.
+    const refreshed = await run(["gh", "pr", "update-branch", String(pr.number)]);
+    result = {
+      ...withContext,
+      outcome: "waiting",
+      reason: refreshed.ok
+        ? "Branch updated against main. Waiting for checks to re-run."
+        : "Checks predate the current main and the branch could not be updated automatically. The author needs to merge main or rebase so the checks re-run.",
+    };
   } else if (ci.state === "failing") {
     result = { ...withContext, outcome: "blocked", reason: `Checks ${ci.detail}.${conflictNote}` };
   } else if (ci.state === "none") {

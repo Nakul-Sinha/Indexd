@@ -8,7 +8,7 @@ import {
   checkInvariants,
   checkTestsAccompanySource,
 } from "../src/checks.ts";
-import { summariseChecks } from "../src/ci.ts";
+import { checksAreStale, summariseChecks } from "../src/ci.ts";
 import { decide } from "../src/policy.ts";
 
 const diff = (body: string) =>
@@ -296,5 +296,43 @@ describe("continuous integration status", () => {
       { name: "Optional", bucket: "skipping" },
     ]);
     expect(status.state).toBe("passing");
+  });
+});
+
+describe("stale check detection", () => {
+  const check = (completedAt?: string) => ({ name: "TypeScript", bucket: "pass", completedAt });
+
+  test("a result finished before main moved is stale", () => {
+    // The exact situation this gate creates: it merges one pull request at a
+    // time, and every merge moves main for the ones behind it.
+    expect(checksAreStale([check("2026-08-29T13:20:00Z")], "2026-08-29T14:00:00Z")).toBe(true);
+  });
+
+  test("a result finished after the last commit to main is current", () => {
+    expect(checksAreStale([check("2026-08-29T14:30:00Z")], "2026-08-29T14:00:00Z")).toBe(false);
+  });
+
+  test("the newest check wins, so one slow job does not mark the set stale", () => {
+    expect(
+      checksAreStale(
+        [check("2026-08-29T13:20:00Z"), check("2026-08-29T14:30:00Z")],
+        "2026-08-29T14:00:00Z",
+      ),
+    ).toBe(false);
+  });
+
+  test("checks with no completion time cannot make a verdict", () => {
+    expect(checksAreStale([check(undefined)], "2026-08-29T14:00:00Z")).toBe(false);
+  });
+
+  test("an unreadable base commit time never blocks", () => {
+    // Failing open here is right: a clock problem should not stop every merge.
+    expect(checksAreStale([check("2026-08-29T13:20:00Z")], null)).toBe(false);
+    expect(checksAreStale([check("2026-08-29T13:20:00Z")], "not a date")).toBe(false);
+  });
+
+  test("no checks at all is not stale, it is unverified", () => {
+    // summariseChecks reports that case as "none", which blocks on its own.
+    expect(checksAreStale([], "2026-08-29T14:00:00Z")).toBe(false);
   });
 });
