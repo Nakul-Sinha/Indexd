@@ -102,19 +102,45 @@ export function checkAuthorshipNotes(added: readonly AddedLine[]): Finding[] {
 }
 
 /**
+ * Strip a line to its code, so a rule cannot fire on a comment that merely names
+ * the thing it forbids. A file explaining why there is no bypass would otherwise
+ * be blocked for saying so, which is the most annoying kind of false positive:
+ * it punishes the person who documented the rule.
+ */
+function codeOnly(text: string): string {
+  return text
+    .replace(/\/\/.*$/, "")
+    .replace(/\/\*.*?\*\//g, "")
+    .replace(/^\s*\*.*$/, "")
+    .trim();
+}
+
+function isTestFile(file: string): boolean {
+  return file.includes("/test/") || file.endsWith(".test.ts");
+}
+
+/**
  * Project invariants that a passing test suite would not catch, because the test
  * that would catch them is exactly the test somebody would delete.
+ *
+ * Test files are exempt from the identifier checks. A test asserting that no
+ * bypass exists has to name the bypass to assert it is absent.
  */
 export function checkInvariants(added: readonly AddedLine[]): Finding[] {
   const findings: Finding[] = [];
 
   for (const entry of added) {
-    // The model emits rule documents, never Java. Templating Java source would
-    // discard the safety property that makes the product shippable.
+    const code = codeOnly(entry.text);
+    if (code === "") continue;
+
+    // The model emits rule documents, never Java. Match only signals that are
+    // unambiguously Java: "class" alone is not one, TypeScript has classes too.
     if (
       entry.file.startsWith("packages/authoring/") &&
-      /\b(?:class|public\s+void|import\s+org\.bukkit)\b/.test(entry.text) &&
-      !entry.file.includes("/test/")
+      !isTestFile(entry.file) &&
+      /(?:public\s+(?:static\s+)?(?:void|class)\b|import\s+org\.bukkit|@Override\b|extends\s+JavaPlugin\b)/.test(
+        code,
+      )
     ) {
       findings.push({
         code: "java_generation",
@@ -130,7 +156,8 @@ export function checkInvariants(added: readonly AddedLine[]): Finding[] {
     // reads them; everything downstream reads rollups.
     if (
       entry.file.includes("modules/telemetry/") &&
-      /\b(?:insertRawEvent|raw_events|rawEvents|storeEvent\()/.test(entry.text)
+      !isTestFile(entry.file) &&
+      /\b(?:insertRawEvent|raw_events|rawEvents|storeEvent\()/.test(code)
     ) {
       findings.push({
         code: "raw_event_storage",
@@ -143,7 +170,10 @@ export function checkInvariants(added: readonly AddedLine[]): Finding[] {
     }
 
     // There is no trusted-caller path around validation, and there never will be.
-    if (/\b(?:skipValidation|bypassValidation|trustedOutput|allowUnvalidated)\b/.test(entry.text)) {
+    if (
+      !isTestFile(entry.file) &&
+      /\b(?:skipValidation|bypassValidation|trustedOutput|allowUnvalidated)\b/.test(code)
+    ) {
       findings.push({
         code: "validation_bypass",
         severity: "block",
@@ -156,7 +186,10 @@ export function checkInvariants(added: readonly AddedLine[]): Finding[] {
 
     // Any rule class that auto-approves is a class a player can reach through
     // chat injection. Tiering and injection resistance cannot both be true.
-    if (/\b(?:autoApprove|auto_approve|approvalTier|skipApproval)\b/.test(entry.text)) {
+    if (
+      !isTestFile(entry.file) &&
+      /\b(?:autoApprove|auto_approve|approvalTier|skipApproval)\b/.test(code)
+    ) {
       findings.push({
         code: "auto_approval",
         severity: "block",

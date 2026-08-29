@@ -107,6 +107,54 @@ describe("invariant checks", () => {
     expect(findings.map((f) => f.code)).toContain("auto_approval");
   });
 
+  test("does not fire on the word class, because TypeScript has classes", () => {
+    // Regression: this blocked the authoring pull request three times.
+    expect(
+      checkInvariants(
+        at("packages/authoring/src/pipeline.ts", "export class AuthoringFailedError {"),
+      ),
+    ).toHaveLength(0);
+  });
+
+  test("does not fire on a comment that names what it forbids", () => {
+    // A file documenting why there is no bypass must not be blocked for saying so.
+    expect(
+      checkInvariants(
+        at("packages/authoring/src/pipeline.ts", "// The model emits JSON, never a Java class."),
+      ),
+    ).toHaveLength(0);
+    expect(
+      checkInvariants(
+        at("apps/api/src/x.ts", " * There is no skipValidation flag and never will be."),
+      ),
+    ).toHaveLength(0);
+  });
+
+  test("does not fire inside a test that asserts the absence of a bypass", () => {
+    // Regression: this blocked packages/authoring/test/no-bypass.test.ts.
+    expect(
+      checkInvariants(
+        at(
+          "packages/authoring/test/no-bypass.test.ts",
+          'expect(src).not.toContain("skipValidation");',
+        ),
+      ),
+    ).toHaveLength(0);
+  });
+
+  test("still catches real Java", () => {
+    expect(
+      checkInvariants(
+        at("packages/authoring/src/emit.ts", "const t = `public void onEnable() {}`;"),
+      ),
+    ).toHaveLength(1);
+    expect(
+      checkInvariants(
+        at("packages/authoring/src/emit.ts", 'lines.push("import org.bukkit.Bukkit;");'),
+      ),
+    ).toHaveLength(1);
+  });
+
   test("clean code produces no findings", () => {
     expect(
       checkInvariants(at("apps/cli/src/watch.ts", "const budget = STALL_BUDGET_MS[state];")),
