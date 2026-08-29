@@ -18,6 +18,9 @@
     "test": "turbo run test",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
+    "dev:api": "bun run --cwd apps/api dev",
+    "test:api": "bun run --cwd apps/api test",
+    "db:migrate": "bunx drizzle-kit migrate --config packages/db/drizzle.config.ts",
     "schemas": "bun run --cwd packages/contracts schemas",
     "schemas:check": "bun run --cwd packages/contracts schemas:check",
     "mock": "bun run --cwd tools/mock-api dev"

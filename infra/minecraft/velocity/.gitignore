@@ -1,0 +1,14 @@
+# Velocity runtime files generated when the server starts.
+# These are NOT part of the source repository.
+
+# The Velocity server binary (downloaded separately, not committed)
+velocity.jar
+
+# Runtime data directories created on first launch
+lang/
+logs/
+plugins/
+
+# Velocity runtime-generated secrets and logs
+forwarding.secret
+velocity.log

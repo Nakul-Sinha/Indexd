@@ -1,0 +1,17 @@
+compact: true
+quiet: true
+
+directory:
+  - .
+
+framework:
+  - terraform
+  - kubernetes
+  - github_actions
+
+skip-path:
+  - out[\\/]
+  - \.git[\\/]
+  - \.terraform[\\/]
+  - node_modules[\\/]
+  - \.next[\\/]

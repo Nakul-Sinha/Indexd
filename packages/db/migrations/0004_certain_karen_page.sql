@@ -1,0 +1,1 @@
+ALTER TABLE "server_configs" ADD COLUMN "type" text NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE "server_k8s" RENAME COLUMN "stateful_set_name" TO "deployment_name";

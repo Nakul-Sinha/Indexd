@@ -165,3 +165,33 @@ export const PROVISIONAL_STALL_BUDGET_MS: Record<DeploymentState, number | null>
   aborted: null,
   failed: null,
 };
+
+/**
+ * HTTP view used by the control-plane API. CamelCase on the wire for Elysia
+ * handlers; the TypeBox `Deployment` object above is the locked CLI/MCP seam.
+ */
+export type DeploymentView = {
+  id: string;
+  serverId: string;
+  state: DeploymentState;
+  queuePosition: number | null;
+  candidatePod: string | null;
+  snapshotId: string | null;
+  fromVersion: string | null;
+  toVersion: string | null;
+  error: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+};
+
+export type VelocityTransfer = {
+  transferId: string;
+  fromRoute: string;
+  toRoute: string;
+  message: string;
+};
+
+export type VelocityTransferAck = {
+  movedPlayers: string[];
+  failures: Array<{ player: string; reason: string }>;
+};

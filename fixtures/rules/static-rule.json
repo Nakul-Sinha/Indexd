@@ -1,0 +1,13 @@
+{
+  "name": "static-fixture",
+  "version": 1,
+  "source": "hand-written",
+  "rules": [
+    {
+      "id": "spawn-mobs-normal",
+      "type": "gamerule",
+      "key": "doMobSpawning",
+      "value": true
+    }
+  ]
+}

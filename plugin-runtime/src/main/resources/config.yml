@@ -1,0 +1,23 @@
+onPlayerJoin:
+  privateMessage: "Welcome!"
+  broadcastMessage: "{player} joined!"
+
+  potionEffects:
+    - type: SPEED
+      durationTicks: 600
+      amplifier: 1
+
+  startingItems:
+    - material: DIAMOND
+      amount: 5
+
+onPlayerQuit:
+  broadcastMessage: "{player} left the server!"
+
+onPlayerAction:
+  triggerAction: "BREAK_DIAMOND_ORE"
+
+  achievement:
+    title: "Miner"
+    description: "Break your first diamond ore"
+    soundEffect: "ENTITY_PLAYER_LEVELUP"

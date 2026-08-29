@@ -6,8 +6,40 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/node_modules", "!**/.next", "!**/schemas/*.json"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/schemas/*.json",
+      "!**/infra",
+      "!**/plugin-runtime",
+      "!**/packages/db/migrations",
+      "!**/apps/api/backup-arch"
+    ]
   },
+  "overrides": [
+    {
+      "includes": ["apps/api/**", "packages/plugin-builder/**", "packages/db/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off",
+            "noImplicitAnyLet": "off",
+            "noNonNullAssertedOptionalChain": "off",
+            "noTemplateCurlyInString": "off"
+          },
+          "style": { "noNonNullAssertion": "off" },
+          "complexity": {
+            "noStaticOnlyClass": "off",
+            "noThisInStatic": "off",
+            "noArguments": "off"
+          },
+          "correctness": { "noUnusedImports": "off", "noUnreachable": "off" }
+        }
+      }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

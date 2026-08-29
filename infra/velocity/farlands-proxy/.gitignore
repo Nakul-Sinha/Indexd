@@ -1,0 +1,17 @@
+# Gradle build outputs
+build/
+.gradle/
+
+# Local Gradle wrapper cache
+.gradle/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
