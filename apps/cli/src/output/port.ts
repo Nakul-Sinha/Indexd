@@ -1,4 +1,10 @@
-import type { DeploymentState, DeploymentStateEvent, Refusal } from "@farlands/contracts";
+import type {
+  DeploymentClosedEvent,
+  DeploymentStallEvent,
+  DeploymentState,
+  DeploymentStateEvent,
+  Refusal,
+} from "@farlands/contracts";
 
 /**
  * The output port: the one seam between "what happened" and "how it is written".
@@ -49,26 +55,14 @@ export interface LogLine {
  * provisional, and a consumer that cannot tell a provisional budget from a
  * measured one will quote it as though it were measured.
  */
-export interface StallReport {
-  deployment_id: string;
-  server_id: string;
-  state: DeploymentState;
-  budget_ms: number;
-  elapsed_ms: number;
-  budget_source: "provisional";
-  policy: "report" | "abort";
-  ts: string;
-}
-
-export interface DeploymentSummary {
-  deployment_id: string;
-  server_id: string;
-  final_state: DeploymentState;
-  elapsed_ms: number;
-  /** The exact command that undoes this, printed where the owner can see it. */
-  rollback_command: string;
-  ts: string;
-}
+/**
+ * Both record shapes live in packages/contracts, because they share the NDJSON
+ * stream with DeploymentStateEvent and a consumer parsing that stream receives
+ * all three. A record the contract package does not define is one no consumer
+ * can rely on.
+ */
+export type StallReport = Omit<DeploymentStallEvent, "event">;
+export type DeploymentSummary = Omit<DeploymentClosedEvent, "event">;
 
 export interface OutputPort {
   readonly mode: "human" | "json";

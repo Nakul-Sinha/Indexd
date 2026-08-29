@@ -98,6 +98,53 @@ export const DeploymentStateEvent = Type.Object({
 export type DeploymentStateEvent = Static<typeof DeploymentStateEvent>;
 
 /**
+ * A stall report, emitted when a state exceeds its budget without advancing.
+ *
+ * Contracted rather than declared client side, because it shares the NDJSON
+ * stream with DeploymentStateEvent and a consumer parsing that stream receives
+ * both. A record the contract package does not define is a record no consumer
+ * can rely on.
+ */
+export const DeploymentStallEvent = Type.Object({
+  event: Type.Literal("deployment_stalled"),
+  deployment_id: DeploymentId,
+  server_id: ServerId,
+  state: DeploymentState,
+  budget_ms: Type.Integer({ minimum: 0 }),
+  elapsed_ms: Type.Integer({ minimum: 0 }),
+  /**
+   * Where the budget came from. "provisional" means the placeholder table, not a
+   * measurement. It stops being the only possible value once M1 lands, so it is
+   * a union rather than a literal.
+   */
+  budget_source: Type.Union([Type.Literal("provisional"), Type.Literal("measured")]),
+  policy: Type.Union([Type.Literal("report"), Type.Literal("abort")]),
+  ts: Timestamp,
+});
+export type DeploymentStallEvent = Static<typeof DeploymentStallEvent>;
+
+/** The closing record of a watched deployment. */
+export const DeploymentClosedEvent = Type.Object({
+  event: Type.Literal("deployment_closed"),
+  deployment_id: DeploymentId,
+  server_id: ServerId,
+  final_state: DeploymentState,
+  elapsed_ms: Type.Integer({ minimum: 0 }),
+  /** The exact command that undoes this, printed where the owner can see it. */
+  rollback_command: Type.String(),
+  ts: Timestamp,
+});
+export type DeploymentClosedEvent = Static<typeof DeploymentClosedEvent>;
+
+/** Every record a --json watch session can write. */
+export const DeploymentStreamRecord = Type.Union([
+  DeploymentStateEvent,
+  DeploymentStallEvent,
+  DeploymentClosedEvent,
+]);
+export type DeploymentStreamRecord = Static<typeof DeploymentStreamRecord>;
+
+/**
  * Per-state stall budgets in milliseconds, used by the CLI --watch loop to tell
  * a slow deployment from a hung one.
  *

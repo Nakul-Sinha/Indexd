@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { DeploymentState, DeploymentStateEvent } from "@farlands/contracts";
+import { DeploymentState, DeploymentStateEvent, DeploymentStreamRecord } from "@farlands/contracts";
+import { Value } from "@sinclair/typebox/value";
 import { JsonOutput } from "../src/output/json.ts";
 import {
   authorisedEnv,
@@ -51,9 +52,55 @@ describe("--json writes valid NDJSON", () => {
 
     const transitions = transitionsOf(records);
     // The recorded run is a walk of the state machine, not a sample of it.
-    expect(transitions.length).toBeGreaterThanOrEqual(5);
+    // The mock walks nine states. Asserting "at least five" let a regression
+    // drop four transitions and still pass, so assert the sequence itself.
+    expect(transitions.map((record) => record.state)).toEqual([
+      "queued",
+      "building",
+      "staging",
+      "presync",
+      "freezing",
+      "verifying",
+      "cutover",
+      "draining",
+      "idle",
+    ]);
     expect(transitions.at(0)?.state).toBe("queued");
     expect(transitions.at(-1)?.state).toBe("idle");
+  });
+
+  test("every record in the stream matches a contract type, not just the transitions", async () => {
+    // The stream also carries deployment_stalled and deployment_closed. Both
+    // used to be declared inside this app, so a consumer parsing the stream got
+    // records the contract package did not define. All three are contracted now.
+    const run = await runFarlands(
+      [
+        "deploy",
+        SERVER,
+        "--version",
+        String(VERSION),
+        "--watch",
+        "--json",
+        "--poll-interval-ms",
+        "40",
+        "--stall-budget-ms",
+        "4000",
+      ],
+      { env: await authorisedEnv(), scenario: "happy", stepMs: 4 },
+    );
+
+    const records = parseNdjson(run.stdout);
+    expect(records.length).toBeGreaterThan(1);
+
+    for (const record of records) {
+      if (!Value.Check(DeploymentStreamRecord, record)) {
+        const detail = [...Value.Errors(DeploymentStreamRecord, record)]
+          .slice(0, 3)
+          .map((error) => `${error.path}: ${error.message}`)
+          .join("; ");
+        throw new Error(`uncontracted record ${JSON.stringify(record)} (${detail})`);
+      }
+    }
   });
 
   test("every transition object matches the contract type exactly", async () => {
