@@ -1,3 +1,7 @@
+import {
+  resolveApiBaseUrl,
+  DEFAULT_API_BASE_URL as SHARED_DEFAULT_API_BASE_URL,
+} from "@farlands/contracts";
 import { type ApiClient, type FetchLike, HttpApiClient } from "./api-client.ts";
 import type { Caller } from "./caller.ts";
 import type { DispatcherDeps } from "./dispatch.ts";
@@ -13,7 +17,7 @@ import { InMemoryRateLimiter, type RateLimiter } from "./rate-limit.ts";
  * for the Postgres backed one when there is more than one replica.
  */
 
-export const DEFAULT_API_BASE_URL = "http://127.0.0.1:3000";
+export const DEFAULT_API_BASE_URL = SHARED_DEFAULT_API_BASE_URL;
 
 export interface RuntimeOptions {
   apiBaseUrl?: string;
@@ -27,7 +31,7 @@ export interface RuntimeOptions {
 
 export function readRuntimeOptions(env: Record<string, string | undefined>): RuntimeOptions {
   const options: RuntimeOptions = {
-    apiBaseUrl: env.FARLANDS_API_URL ?? DEFAULT_API_BASE_URL,
+    apiBaseUrl: resolveApiBaseUrl(env),
   };
   if (env.FARLANDS_PRINCIPAL_HEADER) options.principalHeader = env.FARLANDS_PRINCIPAL_HEADER;
   return options;

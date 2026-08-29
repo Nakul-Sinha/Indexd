@@ -1,4 +1,4 @@
-import { TOKEN_PREFIX } from "@farlands/contracts";
+import { API_BASE_URL_ENV, DEFAULT_API_BASE_URL, TOKEN_PREFIX } from "@farlands/contracts";
 import { CliError, EXIT } from "./errors.ts";
 
 /**
@@ -22,9 +22,9 @@ export const MACHINE_TOKEN_ENV = "FARLANDS_TOKEN";
 export const MACHINE_TOKEN_FILE_ENV = "FARLANDS_TOKEN_FILE";
 export const APPROVAL_TOKEN_ENV = "FARLANDS_APPROVAL_TOKEN";
 export const CONFIG_PATH_ENV = "FARLANDS_CONFIG";
-export const BASE_URL_ENV = "FARLANDS_API";
+export const BASE_URL_ENV = API_BASE_URL_ENV;
 
-export const DEFAULT_BASE_URL = "http://127.0.0.1:4000";
+export const DEFAULT_BASE_URL = DEFAULT_API_BASE_URL;
 
 export interface CredentialSources {
   env: Record<string, string | undefined>;

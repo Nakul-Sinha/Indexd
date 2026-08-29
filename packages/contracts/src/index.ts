@@ -16,6 +16,7 @@ export * from "./api.ts";
 export * from "./common.ts";
 export * from "./deployment.ts";
 export * from "./digest.ts";
+export * from "./endpoints.ts";
 export * from "./events.ts";
 export * from "./mcp-tools.ts";
 export * from "./proposals.ts";
