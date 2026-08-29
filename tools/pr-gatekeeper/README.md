@@ -8,8 +8,8 @@ Always from the dedicated worktree, never from a tree with uncommitted work: it 
 request heads out into whatever tree it runs in.
 
 ```bash
-git worktree add --detach G:/Devjams-raincloud/pr-gatekeeper main
-cd G:/Devjams-raincloud/pr-gatekeeper
+git worktree add --detach ../pr-gatekeeper main
+cd ../pr-gatekeeper
 bun run tools/pr-gatekeeper/src/index.ts --dry-run
 ```
 
@@ -20,7 +20,7 @@ bun run tools/pr-gatekeeper/src/index.ts --dry-run
 
 ## Running it continuously
 
-`run-gate.ps1` is the durable path. Register it with Task Scheduler on a ten minute repetition and
+`run-gate.ps1` is the durable path. It takes the worktree location from `FARLANDS_GATE_WORKTREE`, falling back to a sibling directory, so no path is baked into the script. Register it with Task Scheduler on a ten minute repetition and
 it keeps working across reboots, with no editor session involved. The setup command is in the
 comment at the top of the script, and every run appends to `gate.log`.
 

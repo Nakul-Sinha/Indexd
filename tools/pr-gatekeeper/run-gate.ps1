@@ -8,7 +8,7 @@
     Setup, once, from an elevated PowerShell:
 
       $action  = New-ScheduledTaskAction -Execute "pwsh.exe" `
-                   -Argument "-NoProfile -File G:\Devjams-raincloud\Raincloud\tools\pr-gatekeeper\run-gate.ps1"
+                   -Argument "-NoProfile -File <checkout>\tools\pr-gatekeeper\run-gate.ps1"
       $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) `
                    -RepetitionInterval (New-TimeSpan -Minutes 10)
       Register-ScheduledTask -TaskName "farlands-pr-gatekeeper" -Action $action -Trigger $trigger
@@ -18,7 +18,8 @@
 
 $ErrorActionPreference = "Stop"
 
-$Worktree = "G:\Devjams-raincloud\pr-gatekeeper"
+# Override with FARLANDS_GATE_WORKTREE if the worktree lives elsewhere.
+$Worktree = if ($env:FARLANDS_GATE_WORKTREE) { $env:FARLANDS_GATE_WORKTREE } else { Join-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot))) "pr-gatekeeper" }
 $LogFile  = Join-Path $PSScriptRoot "gate.log"
 
 function Write-Log([string]$Message) {
