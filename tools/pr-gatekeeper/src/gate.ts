@@ -94,7 +94,13 @@ async function unifiedDiff(number: number): Promise<string> {
  * changes get silently reverted.
  */
 async function resolveConflicts(branch: string): Promise<{ ok: boolean; detail: string }> {
+  // Conflict resolution is the one path that needs a real branch, because the
+  // result has to be pushed back to it.
   await run(["git", "fetch", "origin", "main", branch]);
+  const attach = await run(["git", "checkout", "--force", "-B", branch, `origin/${branch}`]);
+  if (!attach.ok) {
+    return { ok: false, detail: `Could not attach to ${branch} to resolve conflicts` };
+  }
   const merge = await run(["git", "merge", "origin/main", "--no-edit"]);
   if (merge.ok) return { ok: true, detail: "merged origin/main cleanly" };
 
@@ -171,10 +177,19 @@ export async function gatePullRequest(pr: ListedPr, options: GateOptions): Promi
     return { ...base, outcome: "skipped", reason: decision.detail };
   }
 
-  const checkout = await run(["gh", "pr", "checkout", String(pr.number), "--force"]);
-  if (!checkout.ok) {
-    return { ...base, outcome: "blocked", reason: "Could not check the branch out." };
+  // Detached on purpose. A named checkout fails when the same branch is checked
+  // out in another worktree, which is normal here: parallel agents each hold
+  // one. Testing a pull request only needs its tree, not its branch name.
+  const checkout = await run(["git", "fetch", "origin", `pull/${pr.number}/head`, "--force"]);
+  const detach = await run(["git", "checkout", "--detach", "--force", "FETCH_HEAD"]);
+  if (!checkout.ok || !detach.ok) {
+    return {
+      ...base,
+      outcome: "blocked",
+      reason: `Could not check the head out. ${detach.output.slice(-200)}`,
+    };
   }
+  await run(["git", "clean", "-fd"]);
 
   let conflictNote = "";
   if (pr.mergeable === "CONFLICTING") {
