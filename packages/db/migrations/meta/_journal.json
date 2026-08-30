@@ -43,6 +43,13 @@
       "when": 1783000000000,
       "tag": "0005_game_servers_user_active_name_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788084547666,
+      "tag": "0006_dodo_payments",
+      "breakpoints": true
     }
   ]
 }
