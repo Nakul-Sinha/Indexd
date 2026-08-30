@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 
+import { getSession } from "@/lib/auth";
+import { upstreamSessionCookie } from "@/lib/auth-cookie";
 import { ConnectorBodyTooLargeError, readConnectorBody } from "@/lib/connector-body";
 import { connectorOriginAllowed, connectorPathAllowed } from "@/lib/connector-policy";
 
@@ -32,6 +34,13 @@ function requestOriginAllowed(request: NextRequest): boolean {
 }
 
 async function proxy(request: NextRequest, path: string[]): Promise<Response> {
+  const authResult = await getSession(request.headers);
+  if (authResult.response) return authResult.response;
+  const session = authResult.session;
+  if (!session) {
+    return Response.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   const pathname = `/${path.map(encodeURIComponent).join("/")}`;
   if (!connectorPathAllowed(pathname)) {
     return Response.json({ error: "Connector path is not allowed" }, { status: 404 });
@@ -53,8 +62,7 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
-  const cookie = request.headers.get("cookie");
-  if (cookie) headers.set("cookie", cookie);
+  headers.set("cookie", upstreamSessionCookie(session.session.token));
 
   const method = request.method.toUpperCase();
   let body: ArrayBuffer | undefined;

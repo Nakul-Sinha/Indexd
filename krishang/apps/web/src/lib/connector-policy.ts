@@ -8,6 +8,7 @@ export function connectorPathAllowed(pathname: string): boolean {
   return (
     pathname === "/health" ||
     pathname === "/api/allay/chat" ||
+    pathname === "/api/allay/execute" ||
     pathname === "/api/servers" ||
     pathname.startsWith("/api/servers/")
   );
