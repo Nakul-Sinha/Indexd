@@ -12,8 +12,10 @@ export type CreateMinecraftBody = {
   storageGb: number;
   gameConfigJson: {
     maxPlayers: number;
-    difficulty: "normal";
+    difficulty: "peaceful" | "easy" | "normal" | "hard";
     pvp: boolean;
+    seed?: string;
+    motd?: string;
   };
 };
 
