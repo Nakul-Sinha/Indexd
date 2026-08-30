@@ -4,6 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { db } from "./db";
 import { adminModule } from "./modules/admin";
+import { allayModule } from "./modules/allay";
 import { AuthService } from "./modules/auth/service";
 import { BackupModule } from "./modules/backup";
 import { deployModule } from "./modules/deploy/http";
@@ -34,6 +35,7 @@ export const app = new Elysia()
 
   .use(rulesModule)
   .use(serversModule)
+  .use(allayModule)
   .use(quotaModule)
   .use(adminModule)
   .use(deployModule)

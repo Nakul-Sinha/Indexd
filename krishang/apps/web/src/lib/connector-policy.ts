@@ -6,7 +6,10 @@ export function connectorPathAllowed(pathname: string): boolean {
   }
 
   return (
-    pathname === "/health" || pathname === "/api/servers" || pathname.startsWith("/api/servers/")
+    pathname === "/health" ||
+    pathname === "/api/allay/chat" ||
+    pathname === "/api/servers" ||
+    pathname.startsWith("/api/servers/")
   );
 }
 

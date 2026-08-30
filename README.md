@@ -237,6 +237,21 @@ Other useful commands:
 | `bun run schemas:check` | Fail if the generated schemas drifted from the contract types |
 | `bun run fixtures/telemetry/generate.ts` | Regenerate the recorded telemetry sample |
 
+### Allay conversational companion
+
+The Krishang web control plane includes Allay, a chat-style companion for manual server control.
+Put `OPENAI_API_KEY` in the repository-root `.env`; the root `apps/api` service reads it
+server-side. The key is never copied into the Next.js environment or returned to the browser.
+
+Allay fixes conversational requests to `gpt-5.6-luna` with low reasoning and `store: false`.
+OpenAI receives only the current conversational message and up to eight bounded chat-history
+turns. Server inventory, join addresses, control-plane errors, and mutation confirmations are not
+sent to the model. The model has no tools: deterministic application code owns every server
+lookup and action, and mutations still require the existing explicit confirmation gate.
+
+If the key is missing, the provider is unavailable, or a request is rate-limited, the UI labels
+the degraded state and uses its built-in offline reply. Manual server controls remain available.
+
 The mock API serves scripted deployments so clients can be built before the real controller
 exists. Pick a scenario with a query parameter:
 

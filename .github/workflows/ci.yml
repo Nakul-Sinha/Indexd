@@ -48,6 +48,33 @@ jobs:
           bun run schemas
           git diff --exit-code -- packages/contracts/schemas
 
+  krishang-web:
+    name: Krishang web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: krishang
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Test
+        run: bun run --cwd apps/web test
+
+      - name: Typecheck
+        run: bunx tsc --noEmit --pretty false -p apps/web/tsconfig.json
+
+      - name: Build
+        run: bun run --cwd apps/web build
+
   fixtures:
     name: Fixtures are reproducible
     runs-on: ubuntu-latest
