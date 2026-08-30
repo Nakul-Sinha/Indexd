@@ -99,12 +99,55 @@ const rollback: ToolHandler = async (args, context) => {
 };
 
 const create_server: ToolHandler = async (args, context) => {
-  const { name, approval_token } = args as unknown as { name: string; approval_token?: string };
+  const {
+    name,
+    type,
+    version,
+    cpu_cores,
+    ram_mb,
+    storage_gb,
+    max_players,
+    difficulty,
+    pvp,
+    seed,
+    motd,
+    approval_token,
+  } = args as unknown as {
+    name: string;
+    type: "paper" | "vanilla";
+    version: string;
+    cpu_cores: number;
+    ram_mb: number;
+    storage_gb: number;
+    max_players: number;
+    difficulty: "peaceful" | "easy" | "normal" | "hard";
+    pvp: boolean;
+    seed?: string;
+    motd?: string;
+    approval_token?: string;
+  };
   return act({
     tool: "create_server",
     context,
     resource: `server named ${name}`,
-    request: { method: "POST", path: "/v1/servers", body: { name, approval_token } },
+    request: {
+      method: "POST",
+      path: "/v1/servers",
+      body: {
+        name,
+        type,
+        version,
+        cpu_cores,
+        ram_mb,
+        storage_gb,
+        max_players,
+        difficulty,
+        pvp,
+        ...(seed === undefined ? {} : { seed }),
+        ...(motd === undefined ? {} : { motd }),
+        approval_token,
+      },
+    },
     note: "This is a cluster operation. Rollback does not undo it.",
   });
 };

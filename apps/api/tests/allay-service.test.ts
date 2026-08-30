@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { recordingToolLogger } from "@farlands/mcp";
 import { status } from "elysia";
 
 import { createAllayModule } from "../src/modules/allay";
+import { type AllayControlPlane, createAllayMcpBridge } from "../src/modules/allay/mcp";
 import { allayChatDto } from "../src/modules/allay/model";
 import { FixedWindowRateLimiter } from "../src/modules/allay/rate-limit";
 import {
@@ -54,7 +56,7 @@ describe("Allay chat input", () => {
 });
 
 describe("Luna request", () => {
-  test("fixes the model, reasoning, privacy, and tool-free reply schema", () => {
+  test("fixes the model, reasoning, privacy, and bounded MCP-backed tool surface", () => {
     const request = buildLunaRequest({
       message: "Tell me a tiny joke about creepers.",
       history: [{ role: "assistant", content: "What would you like to know?" }],
@@ -65,7 +67,14 @@ describe("Luna request", () => {
     expect(request.reasoning.effort).toBe(ALLAY_REASONING_EFFORT);
     expect(request.reasoning.effort).toBe("low");
     expect(request.store).toBe(false);
-    expect("tools" in request).toBe(false);
+    expect(request.parallel_tool_calls).toBe(false);
+    expect(request.tools.map((tool) => tool.name)).toEqual([
+      "list_servers",
+      "get_server",
+      "create_server",
+      "power_action",
+    ]);
+    expect(JSON.stringify(request.tools)).not.toContain("approval_token");
     expect(request.text.verbosity).toBe("low");
     expect(request.text.format).toMatchObject({
       type: "json_schema",
@@ -87,9 +96,9 @@ describe("Luna request", () => {
 
   test("fails closed without exposing a missing server-side key", async () => {
     delete process.env.OPENAI_API_KEY;
-    await expect(AllayService.reply({ message: "hello", history: [] })).rejects.toMatchObject({
-      code: 503,
-    });
+    await expect(
+      AllayService.reply({ message: "hello", history: [] }, "operator"),
+    ).rejects.toMatchObject({ code: 503 });
   });
 });
 
@@ -113,6 +122,81 @@ function chatRequest(body: unknown, signal?: AbortSignal) {
   });
 }
 
+function executeRequest(body: unknown) {
+  return new Request("http://localhost/api/allay/execute", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function controlPlane(overrides: Partial<AllayControlPlane> = {}): AllayControlPlane {
+  return {
+    listServers: async () => [],
+    getServer: async (_userId, serverId) => ({ id: serverId, name: "Survival" }),
+    createServer: async () => "123e4567-e89b-42d3-a456-426614174000",
+    powerServer: async (_serverId, _userId, input) => ({ status: input.action }),
+    ...overrides,
+  };
+}
+
+describe("Allay MCP bridge", () => {
+  test("executes reads automatically through the MCP invoker", async () => {
+    const logger = recordingToolLogger();
+    const bridge = createAllayMcpBridge("operator", {
+      logger,
+      controlPlane: controlPlane({
+        listServers: async () => [{ id: "123e4567-e89b-42d3-a456-426614174000" }],
+      }),
+    });
+
+    const result = await bridge.callFromModel("list_servers", {});
+    expect(result.kind).toBe("outcome");
+    if (result.kind === "outcome") {
+      expect(result.outcome.kind).toBe("ok");
+      expect(result.outcome.body).toMatchObject({ count: 1 });
+    }
+    expect(logger.entries.at(-1)?.tool).toBe("list_servers");
+  });
+
+  test("stages model acts, then executes the confirmed proposal with safe defaults", async () => {
+    let createdInput: unknown;
+    const bridge = createAllayMcpBridge("operator", {
+      logger: recordingToolLogger(),
+      controlPlane: controlPlane({
+        createServer: async (_userId, input) => {
+          createdInput = input;
+          return "123e4567-e89b-42d3-a456-426614174000";
+        },
+      }),
+    });
+
+    const staged = await bridge.callFromModel("create_server", { name: "Sky Realm" });
+    expect(staged.kind).toBe("proposal");
+    expect(createdInput).toBeUndefined();
+    if (staged.kind !== "proposal") throw new Error("expected proposal");
+    expect(staged.proposal.arguments).toMatchObject({
+      type: "paper",
+      version: "1.21.8",
+      cpu_cores: 1,
+      ram_mb: 2048,
+      storage_gb: 5,
+    });
+
+    const executed = await bridge.executeConfirmed(staged.proposal);
+    expect(executed.kind).toBe("ok");
+    expect(createdInput).toMatchObject({
+      name: "Sky Realm",
+      game: "minecraft",
+      type: "paper",
+      version: "1.21.8",
+      cpuCores: 1,
+      ramMb: 2048,
+      storageGb: 5,
+    });
+  });
+});
+
 describe("Allay route boundary", () => {
   test("authenticates before calling the model provider", async () => {
     let providerCalls = 0;
@@ -122,7 +206,7 @@ describe("Allay route boundary", () => {
       },
       reply: async () => {
         providerCalls += 1;
-        return "This must not run.";
+        return { reply: "This must not run." };
       },
     });
 
@@ -137,7 +221,7 @@ describe("Allay route boundary", () => {
       authenticate: async () => "operator",
       reply: async () => {
         providerCalls += 1;
-        return "This must not run.";
+        return { reply: "This must not run." };
       },
     });
 
@@ -155,7 +239,7 @@ describe("Allay route boundary", () => {
       rateLimiter: new FixedWindowRateLimiter(1, 60_000),
       reply: async () => {
         providerCalls += 1;
-        return "Hello from Luna.";
+        return { reply: "Hello from Luna." };
       },
     });
 
@@ -170,9 +254,9 @@ describe("Allay route boundary", () => {
     let providerSignal: AbortSignal | undefined;
     const app = createAllayModule({
       authenticate: async () => "operator",
-      reply: async (_input, signal) => {
+      reply: async (_input, _userId, signal) => {
         providerSignal = signal;
-        return "Hello from Luna.";
+        return { reply: "Hello from Luna." };
       },
     });
     const controller = new AbortController();
@@ -181,5 +265,63 @@ describe("Allay route boundary", () => {
     const response = await app.handle(request);
     expect(response.status).toBe(200);
     expect(providerSignal).toBe(request.signal);
+  });
+
+  test("returns Luna's typed proposal without executing it", async () => {
+    const proposal = {
+      tool: "power_action" as const,
+      arguments: {
+        server_id: "123e4567-e89b-42d3-a456-426614174000",
+        action: "restart" as const,
+      },
+    };
+    const app = createAllayModule({
+      authenticate: async () => "operator",
+      reply: async (_input, userId) => ({
+        reply: `Confirm for ${userId}.`,
+        proposal,
+      }),
+    });
+
+    const response = await app.handle(chatRequest({ message: "restart it", history: [] }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      data: { reply: "Confirm for operator.", proposal },
+    });
+  });
+
+  test("executes only a validated act proposal and sanitizes MCP failures", async () => {
+    let executeCalls = 0;
+    const app = createAllayModule({
+      authenticate: async () => "operator",
+      execute: async () => {
+        executeCalls += 1;
+        return {
+          kind: "error",
+          code: "upstream_error",
+          body: { detail: "cluster-internal-host.example" },
+        };
+      },
+    });
+
+    const invalid = await app.handle(executeRequest({ tool: "list_servers", arguments: {} }));
+    expect(invalid.status).toBe(422);
+    expect(executeCalls).toBe(0);
+
+    const failed = await app.handle(
+      executeRequest({
+        tool: "power_action",
+        arguments: {
+          server_id: "123e4567-e89b-42d3-a456-426614174000",
+          action: "start",
+        },
+      }),
+    );
+    expect(failed.status).toBe(502);
+    const text = await failed.text();
+    expect(text).toContain("live control plane");
+    expect(text).not.toContain("cluster-internal-host");
+    expect(executeCalls).toBe(1);
   });
 });

@@ -74,3 +74,6 @@ coverage/
 tools/pr-gatekeeper/gate.log
 
 *.diff
+
+.vercel
+.playwright-cli/

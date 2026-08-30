@@ -65,7 +65,31 @@ export const toolInputs = {
     approval_token: Type.Optional(Type.String()),
   }),
   create_server: Type.Object({
-    name: Type.String({ minLength: 1, maxLength: 64 }),
+    name: Type.String({ minLength: 3, maxLength: 50 }),
+    type: Type.Union([Type.Literal("paper"), Type.Literal("vanilla")], {
+      default: "paper",
+    }),
+    version: Type.String({
+      pattern: "^\\d{1,2}\\.\\d{1,2}(?:\\.\\d{1,2})?$",
+      default: "1.21.8",
+      description: "An explicit Minecraft release, never latest",
+    }),
+    cpu_cores: Type.Integer({ minimum: 1, maximum: 16, default: 1 }),
+    ram_mb: Type.Integer({ minimum: 512, maximum: 32768, default: 2048 }),
+    storage_gb: Type.Integer({ minimum: 2, maximum: 500, default: 5 }),
+    max_players: Type.Integer({ minimum: 1, maximum: 100, default: 20 }),
+    difficulty: Type.Union(
+      [
+        Type.Literal("peaceful"),
+        Type.Literal("easy"),
+        Type.Literal("normal"),
+        Type.Literal("hard"),
+      ],
+      { default: "normal" },
+    ),
+    pvp: Type.Boolean({ default: true }),
+    seed: Type.Optional(Type.String({ maxLength: 32 })),
+    motd: Type.Optional(Type.String({ maxLength: 100 })),
     approval_token: Type.Optional(Type.String()),
   }),
   power_action: Type.Object({
@@ -149,7 +173,7 @@ export const TOOL_DEFINITIONS: readonly ToolDefinition[] = [
     name: "create_server",
     class: "act",
     description:
-      "Provision a new server. This is a cluster operation and is not undone by rollback. Requires an approval token.",
+      "Provision a Paper or Vanilla Minecraft server with bounded safe defaults. This is a cluster operation and is not undone by rollback. Requires an approval token.",
   },
   {
     name: "power_action",
