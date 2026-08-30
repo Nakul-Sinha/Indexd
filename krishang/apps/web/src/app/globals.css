@@ -1043,6 +1043,14 @@ a {
   cursor: not-allowed;
 }
 
+.allay-minecraft-notice {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.56rem;
+  line-height: 1.35;
+}
+
 .allay-anchor {
   display: flex;
   align-items: center;
@@ -1085,66 +1093,18 @@ a {
 .allay-sprite {
   width: 72px;
   height: 72px;
-  overflow: visible;
-}
-
-.allay-wing {
-  fill: var(--allay-deep);
-  transform-box: fill-box;
+  object-fit: contain;
   transform-origin: center;
+  user-select: none;
 }
 
-.allay-wing-light {
-  fill: oklch(0.72 0.115 218);
+.allay-sprite.is-busy {
+  animation: allay-work 500ms ease-in-out infinite alternate;
 }
 
-.allay-body-shadow,
-.allay-head-shadow {
-  fill: oklch(0.3 0.105 229);
-}
-
-.allay-body,
-.allay-head {
-  fill: var(--allay-mid);
-}
-
-.allay-face {
-  fill: var(--allay-bright);
-}
-
-.allay-eye {
-  fill: oklch(0.22 0.055 236);
-}
-
-.allay-eye-shine {
-  fill: oklch(0.97 0.018 202);
-}
-
-.allay-mouth {
-  fill: oklch(0.38 0.09 226);
-}
-
-.allay-arm {
-  fill: oklch(0.58 0.135 225);
-}
-
-.allay-sprite.is-busy .allay-wing-left {
-  animation: allay-work-left 500ms ease-in-out infinite alternate;
-}
-
-.allay-sprite.is-busy .allay-wing-right {
-  animation: allay-work-right 500ms ease-in-out infinite alternate;
-}
-
-@keyframes allay-work-left {
+@keyframes allay-work {
   to {
-    transform: rotate(-8deg) translateX(-2px);
-  }
-}
-
-@keyframes allay-work-right {
-  to {
-    transform: rotate(8deg) translateX(2px);
+    transform: translateY(-3px) rotate(-2deg);
   }
 }
 
@@ -1234,8 +1194,7 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .allay-working svg,
   .allay-pet-state svg,
-  .allay-sprite.is-busy .allay-wing-left,
-  .allay-sprite.is-busy .allay-wing-right {
+  .allay-sprite.is-busy {
     animation: none;
   }
 
