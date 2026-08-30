@@ -26,8 +26,13 @@
   box-sizing: border-box;
 }
 
+html,
 body {
-  min-height: 100vh;
+  min-height: 100%;
+  margin: 0;
+}
+body {
+  min-height: 100dvh;
   background:
     radial-gradient(ellipse at 50% -20%, rgba(117, 163, 68, 0.2), transparent 42rem),
     linear-gradient(180deg, #182111 0%, var(--bg) 52%);
@@ -120,14 +125,14 @@ a {
 }
 
 .mc-desktop {
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   position: relative;
   padding: 4.5rem 1.25rem 5.5rem;
   background: #342113;
 }
 .panorama-canvas {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   background-image:
@@ -146,12 +151,6 @@ a {
   }
   to {
     background-position: 0% center;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .panorama-canvas {
-    animation: none;
-    background-position: 50% center;
   }
 }
 .desktop-sky {
