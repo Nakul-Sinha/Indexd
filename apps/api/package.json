@@ -15,6 +15,7 @@
     "@elysiajs/eden": "^1.4.9",
     "@farlands/authoring": "workspace:*",
     "@farlands/contracts": "workspace:*",
+    "@farlands/mcp": "workspace:*",
     "@farlands/plugin-builder": "workspace:*",
     "@kubernetes/client-node": "^1.4.0",
     "@repo/db": "workspace:*",
