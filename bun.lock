@@ -22,6 +22,7 @@
         "@farlands/plugin-builder": "workspace:*",
         "@kubernetes/client-node": "^1.4.0",
         "@repo/db": "workspace:*",
+        "dodopayments": "^2.48.0",
         "dotenv": "^17.4.2",
         "drizzle-orm": "^0.45.2",
         "elysia": "^1.4.30",
@@ -357,6 +358,8 @@
     "delayed-stream": ["delayed-stream@1.0.0", "", {}, "sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ=="],
 
     "depd": ["depd@2.0.0", "", {}, "sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw=="],
+
+    "dodopayments": ["dodopayments@2.48.0", "", { "dependencies": { "standardwebhooks": "^1.0.0" }, "bin": { "dodopayments": "bin/cli" } }, "sha512-MDsHBdhQuMgYmIykI+2IJeATGNXM7bJVFs4FBUAhmpLNjnxZEqFlmnpUHkWQI6kIHpWhZZXC1cCKpGJVBU6tfg=="],
 
     "dotenv": ["dotenv@17.4.2", "", {}, "sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw=="],
 
