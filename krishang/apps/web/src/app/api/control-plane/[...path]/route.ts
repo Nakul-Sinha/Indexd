@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 
+import { ConnectorBodyTooLargeError, readConnectorBody } from "@/lib/connector-body";
 import { connectorOriginAllowed, connectorPathAllowed } from "@/lib/connector-policy";
 
 export const runtime = "nodejs";
@@ -56,7 +57,15 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
   if (cookie) headers.set("cookie", cookie);
 
   const method = request.method.toUpperCase();
-  const body = method === "GET" || method === "HEAD" ? undefined : await request.arrayBuffer();
+  let body: ArrayBuffer | undefined;
+  try {
+    body = await readConnectorBody(request);
+  } catch (error) {
+    if (error instanceof ConnectorBodyTooLargeError) {
+      return Response.json({ error: "Connector request body is too large" }, { status: 413 });
+    }
+    throw error;
+  }
 
   try {
     const upstream = await fetch(`${base}${pathname}${request.nextUrl.search}`, {
