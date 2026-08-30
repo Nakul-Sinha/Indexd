@@ -9,6 +9,7 @@ describe("connectorPathAllowed", () => {
     expect(connectorPathAllowed("/api/servers/create")).toBe(true);
     expect(connectorPathAllowed("/api/servers/server-id/action")).toBe(true);
     expect(connectorPathAllowed("/api/allay/chat")).toBe(true);
+    expect(connectorPathAllowed("/api/allay/execute")).toBe(true);
     expect(connectorPathAllowed("/api/quota")).toBe(false);
     expect(connectorPathAllowed("/api/allay")).toBe(false);
     expect(connectorPathAllowed("/api/allay/tools")).toBe(false);
