@@ -23,7 +23,8 @@
         "type": "string"
       },
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "from_version": {
@@ -243,7 +244,8 @@
         "type": "string"
       },
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "state": {
@@ -333,7 +335,8 @@
             "type": "string"
           },
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "ts": {
@@ -447,7 +450,8 @@
             "type": "string"
           },
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "ts": {
@@ -560,7 +564,8 @@
             "type": "string"
           },
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "ts": {
@@ -611,7 +616,8 @@
             "type": "string"
           },
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "ts": {
@@ -664,7 +670,8 @@
             "type": "string"
           },
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "ts": {
@@ -727,7 +734,8 @@
         "type": "string"
       },
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "rule_set_version": {
@@ -795,7 +803,8 @@
       "server_id": {
         "anyOf": [
           {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           {
@@ -837,7 +846,8 @@
         "type": "string"
       },
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "limit": {
@@ -904,7 +914,8 @@
         "type": "string"
       },
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "name": {
@@ -1032,7 +1043,8 @@
     ],
     "properties": {
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "from_version": {
@@ -1205,7 +1217,8 @@
     ],
     "properties": {
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "events": {
@@ -1377,7 +1390,8 @@
     ],
     "properties": {
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "window_start": {
@@ -1477,7 +1491,8 @@
         "type": "string"
       },
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "suggested_rules": {},
@@ -1670,7 +1685,8 @@
         ]
       },
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "deployment_id": {
@@ -1895,7 +1911,8 @@
     ],
     "properties": {
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "name": {
@@ -2076,7 +2093,8 @@
         ],
         "properties": {
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "from_version": {
@@ -2228,7 +2246,8 @@
     ],
     "properties": {
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "from_version": {
@@ -2261,7 +2280,8 @@
         ],
         "properties": {
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "from_version": {
@@ -2470,7 +2490,8 @@
             "type": "string"
           },
           "server_id": {
-            "pattern": "^srv_[a-z0-9]{3,32}$",
+            "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
             "type": "string"
           },
           "from_version": {
@@ -2633,7 +2654,8 @@
     ],
     "properties": {
       "server_id": {
-        "pattern": "^srv_[a-z0-9]{3,32}$",
+        "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
         "type": "string"
       },
       "rule_set_version": {

@@ -19,7 +19,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         }
       }
@@ -37,7 +38,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "window": {
@@ -87,7 +89,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         }
       }
@@ -105,7 +108,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "version": {
@@ -128,7 +132,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "from_version": {
@@ -154,7 +159,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "prompt": {
@@ -177,7 +183,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "version": {
@@ -199,7 +206,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "version": {
@@ -223,7 +231,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "approval_token": {
@@ -235,16 +244,100 @@
   {
     "name": "create_server",
     "class": "act",
-    "description": "Provision a new server. This is a cluster operation and is not undone by rollback. Requires an approval token.",
+    "description": "Provision a Paper or Vanilla Minecraft server with bounded safe defaults. This is a cluster operation and is not undone by rollback. Requires an approval token.",
     "inputSchema": {
       "type": "object",
       "required": [
-        "name"
+        "name",
+        "type",
+        "version",
+        "cpu_cores",
+        "ram_mb",
+        "storage_gb",
+        "max_players",
+        "difficulty",
+        "pvp"
       ],
       "properties": {
         "name": {
-          "minLength": 1,
-          "maxLength": 64,
+          "minLength": 3,
+          "maxLength": 50,
+          "type": "string"
+        },
+        "type": {
+          "default": "paper",
+          "anyOf": [
+            {
+              "const": "paper",
+              "type": "string"
+            },
+            {
+              "const": "vanilla",
+              "type": "string"
+            }
+          ]
+        },
+        "version": {
+          "pattern": "^\\d{1,2}\\.\\d{1,2}(?:\\.\\d{1,2})?$",
+          "default": "1.21.8",
+          "description": "An explicit Minecraft release, never latest",
+          "type": "string"
+        },
+        "cpu_cores": {
+          "minimum": 1,
+          "maximum": 16,
+          "default": 1,
+          "type": "integer"
+        },
+        "ram_mb": {
+          "minimum": 512,
+          "maximum": 32768,
+          "default": 2048,
+          "type": "integer"
+        },
+        "storage_gb": {
+          "minimum": 2,
+          "maximum": 500,
+          "default": 5,
+          "type": "integer"
+        },
+        "max_players": {
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20,
+          "type": "integer"
+        },
+        "difficulty": {
+          "default": "normal",
+          "anyOf": [
+            {
+              "const": "peaceful",
+              "type": "string"
+            },
+            {
+              "const": "easy",
+              "type": "string"
+            },
+            {
+              "const": "normal",
+              "type": "string"
+            },
+            {
+              "const": "hard",
+              "type": "string"
+            }
+          ]
+        },
+        "pvp": {
+          "default": true,
+          "type": "boolean"
+        },
+        "seed": {
+          "maxLength": 32,
+          "type": "string"
+        },
+        "motd": {
+          "maxLength": 100,
           "type": "string"
         },
         "approval_token": {
@@ -265,7 +358,8 @@
       ],
       "properties": {
         "server_id": {
-          "pattern": "^srv_[a-z0-9]{3,32}$",
+          "pattern": "^(?:srv_[a-z0-9]{3,32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+          "description": "A legacy srv_* identifier or a UUID issued by the live control plane",
           "type": "string"
         },
         "action": {
