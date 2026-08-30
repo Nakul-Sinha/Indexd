@@ -26,6 +26,17 @@ import {
   PreviewDeployResponse,
   ServerSummary,
 } from "../src/api.ts";
+import {
+  BillingCheckoutRequest,
+  BillingCheckoutResponse,
+  BillingLimits,
+  BillingPlan,
+  BillingPlanSummary,
+  BillingPortalResponse,
+  BillingSubscriptionSummary,
+  BillingSummaryResponse,
+  PaidBillingPlan,
+} from "../src/billing.ts";
 import { Deployment, DeploymentState, DeploymentStateEvent } from "../src/deployment.ts";
 import { SseEvent } from "../src/events.ts";
 import { TOOL_DEFINITIONS, toolInputs } from "../src/mcp-tools.ts";
@@ -69,6 +80,15 @@ const types = {
   DeployResponse,
   MintApprovalRequest,
   MintApprovalResponse,
+  BillingPlan,
+  PaidBillingPlan,
+  BillingLimits,
+  BillingPlanSummary,
+  BillingSubscriptionSummary,
+  BillingSummaryResponse,
+  BillingCheckoutRequest,
+  BillingCheckoutResponse,
+  BillingPortalResponse,
 };
 
 /** The MCP tool manifest: name, class, description, and input schema. */
