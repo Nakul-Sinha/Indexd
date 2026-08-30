@@ -403,7 +403,7 @@ export function Desktop() {
       <div className="desktop-sky" />
       <header className="desktop-topbar">
         <div className="brand-mark">
-          <MapIcon size={18} fill="currentColor" /> FARLANDS <span>LIVE</span>
+          <MapIcon size={18} fill="currentColor" /> INDEXD
         </div>
         <div className="topbar-status" aria-live="polite">
           <span className={connectorState === "unavailable" ? "status-dot warn" : "status-dot"} />

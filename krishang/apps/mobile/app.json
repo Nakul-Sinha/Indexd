@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Farlands",
-    "slug": "farlands-live",
-    "scheme": "farlands",
+    "name": "Indexd",
+    "slug": "indexd",
+    "scheme": "indexd",
     "plugins": ["expo-router", "expo-notifications"]
   }
 }

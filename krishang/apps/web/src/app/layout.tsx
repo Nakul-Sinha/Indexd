@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
 
-export const metadata = { title: "Farlands Live" };
+export const metadata = { title: "Indexd" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
