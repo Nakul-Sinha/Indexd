@@ -6,11 +6,45 @@ export type AllayChatTurn = {
   content: string;
 };
 
+export type AllayCreateToolArguments = {
+  name: string;
+  type: "paper" | "vanilla";
+  version: string;
+  cpu_cores: number;
+  ram_mb: number;
+  storage_gb: number;
+  max_players: number;
+  difficulty: "peaceful" | "easy" | "normal" | "hard";
+  pvp: boolean;
+  seed?: string;
+  motd?: string;
+};
+
+export type AllayPowerToolArguments = {
+  server_id: string;
+  action: "start" | "stop" | "restart";
+};
+
+export type AllayToolProposal =
+  | { tool: "create_server"; arguments: AllayCreateToolArguments }
+  | { tool: "power_action"; arguments: AllayPowerToolArguments };
+
+export type AllayChatResult = {
+  reply: string;
+  proposal?: AllayToolProposal;
+};
+
 type AllayChatResponse = {
   success: boolean;
   data: {
     reply: string;
+    proposal?: AllayToolProposal;
   };
+};
+
+type AllayExecuteResponse<T> = {
+  success: boolean;
+  data: T;
 };
 
 export function shouldUseAllayModel(intent: AllayIntent): boolean {
@@ -43,7 +77,7 @@ export async function askAllay(
   message: string,
   history: AllayChatTurn[],
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<AllayChatResult> {
   const result = await api<AllayChatResponse>("/api/allay/chat", {
     method: "POST",
     body: JSON.stringify({ message, history: history.slice(-8) }),
@@ -51,5 +85,13 @@ export async function askAllay(
   });
   const reply = result.data?.reply?.trim();
   if (!reply) throw new Error("Allay returned an empty reply.");
-  return reply;
+  return { reply, proposal: result.data.proposal };
+}
+
+export async function executeAllayTool<T>(proposal: AllayToolProposal): Promise<T> {
+  const result = await api<AllayExecuteResponse<T>>("/api/allay/execute", {
+    method: "POST",
+    body: JSON.stringify(proposal),
+  });
+  return result.data;
 }

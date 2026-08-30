@@ -15,13 +15,17 @@ import {
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   type AllayChatTurn,
+  type AllayCreateToolArguments,
+  type AllayToolProposal,
   allayFallbackMessage,
   appendAllayExchange,
   askAllay,
+  executeAllayTool,
   shouldUseAllayModel,
 } from "@/lib/allay-chat";
 import {
   type AllayCreateIntent,
+  type AllayCreateTemplate,
   type AllayIntent,
   type AllayPowerAction,
   classifyConfirmationReply,
@@ -29,7 +33,7 @@ import {
   findMentionedServer,
   parseAllayIntent,
 } from "@/lib/allay-intent";
-import { api, joinAddress, type LiveServer } from "@/lib/api";
+import { joinAddress, type LiveServer } from "@/lib/api";
 import { AllaySprite } from "./allay-sprite";
 
 type ConnectorState = "checking" | "connected" | "unavailable";
@@ -42,21 +46,17 @@ type AllayMessage = {
   tone?: "normal" | "success" | "error";
 };
 
-type PowerActionResponse = {
+type PowerActionResult = {
   success: boolean;
-  data: {
-    success: boolean;
-    action: AllayPowerAction;
-    status: string;
-  };
+  action: AllayPowerAction;
+  status: string;
+  server_id: string;
 };
 
-type CreateServerResponse = {
-  success: boolean;
-  message?: string;
-  data?: {
-    id?: string;
-  };
+type CreateServerResult = {
+  server_id: string;
+  name: string;
+  state: string;
 };
 
 type PendingConfirmation = {
@@ -115,7 +115,51 @@ function copiedAccessMessage(server: LiveServer): string {
 
 function createSummary(intent: AllayCreateIntent): string {
   const { body } = intent;
-  return `${createTemplateLabel(intent.template)} named ${body.name}: version ${body.version}, ${body.cpuCores} CPU, ${body.ramMb} MB memory, and ${body.storageGb} GB storage.`;
+  const seed = body.gameConfigJson.seed ? ` Seed: ${body.gameConfigJson.seed}.` : "";
+  const motd = body.gameConfigJson.motd ? ` MOTD: ${body.gameConfigJson.motd}.` : "";
+  return `${createTemplateLabel(intent.template)} named ${body.name}: version ${body.version}, ${body.cpuCores} CPU, ${body.ramMb} MB memory, ${body.storageGb} GB storage, ${body.gameConfigJson.maxPlayers} players, ${body.gameConfigJson.difficulty} difficulty, and PvP ${body.gameConfigJson.pvp ? "on" : "off"}.${seed}${motd}`;
+}
+
+function createToolArguments(intent: AllayCreateIntent): AllayCreateToolArguments {
+  const { body } = intent;
+  return {
+    name: body.name,
+    type: body.type,
+    version: body.version,
+    cpu_cores: body.cpuCores,
+    ram_mb: body.ramMb,
+    storage_gb: body.storageGb,
+    max_players: body.gameConfigJson.maxPlayers,
+    difficulty: body.gameConfigJson.difficulty,
+    pvp: body.gameConfigJson.pvp,
+    ...(body.gameConfigJson.seed ? { seed: body.gameConfigJson.seed } : {}),
+    ...(body.gameConfigJson.motd ? { motd: body.gameConfigJson.motd } : {}),
+  };
+}
+
+function createIntentFromTool(arguments_: AllayCreateToolArguments): AllayCreateIntent {
+  const template: AllayCreateTemplate =
+    arguments_.type === "vanilla" ? "minecraft_vanilla" : "minecraft_paper";
+  return {
+    kind: "create",
+    template,
+    body: {
+      name: arguments_.name,
+      game: "minecraft",
+      type: arguments_.type,
+      version: arguments_.version,
+      cpuCores: arguments_.cpu_cores,
+      ramMb: arguments_.ram_mb,
+      storageGb: arguments_.storage_gb,
+      gameConfigJson: {
+        maxPlayers: arguments_.max_players,
+        difficulty: arguments_.difficulty,
+        pvp: arguments_.pvp,
+        ...(arguments_.seed ? { seed: arguments_.seed } : {}),
+        ...(arguments_.motd ? { motd: arguments_.motd } : {}),
+      },
+    },
+  };
 }
 
 function stateSummary(server: LiveServer, connectorState: ConnectorState) {
@@ -380,13 +424,13 @@ export function AllayCompanion({
     appendMessage("allay", `Creating ${intent.body.name}. I’ll wait for the control plane.`);
 
     try {
-      const result = await api<CreateServerResponse>("/api/servers/create", {
-        method: "POST",
-        body: JSON.stringify(intent.body),
+      const result = await executeAllayTool<CreateServerResult>({
+        tool: "create_server",
+        arguments: createToolArguments(intent),
       });
       await refreshServers().catch(() => undefined);
-      const reference = result.data?.id ? ` Its workload ID is ${result.data.id}.` : "";
-      if (result.data?.id) setActiveServerId(result.data.id);
+      const reference = result.server_id ? ` Its workload ID is ${result.server_id}.` : "";
+      if (result.server_id) setActiveServerId(result.server_id);
       appendMessage(
         "allay",
         `${intent.body.name} was created successfully.${reference}`,
@@ -423,15 +467,12 @@ export function AllayCompanion({
     );
 
     try {
-      const result = await api<PowerActionResponse>(
-        `/api/servers/${encodeURIComponent(server.id)}/action`,
-        {
-          method: "POST",
-          body: JSON.stringify({ action }),
-        },
-      );
+      const result = await executeAllayTool<PowerActionResult>({
+        tool: "power_action",
+        arguments: { server_id: server.id, action },
+      });
       await refreshServers();
-      const finalState = humanize(result.data.status).toLocaleLowerCase();
+      const finalState = humanize(result.status).toLocaleLowerCase();
       const address =
         action === "start" && server.hostname
           ? ` Its ${accessNoun(server)} is ${joinAddress(server)}.`
@@ -521,10 +562,11 @@ export function AllayCompanion({
     setBusyChat(true);
 
     try {
-      const reply = await askAllay(value, allayHistory, controller.signal);
+      const result = await askAllay(value, allayHistory, controller.signal);
       if (controller.signal.aborted) return;
-      appendMessage("allay", reply);
-      setAllayHistory((history) => appendAllayExchange(history, value, reply));
+      appendMessage("allay", result.reply);
+      setAllayHistory((history) => appendAllayExchange(history, value, result.reply));
+      if (result.proposal) stageToolProposal(result.proposal);
     } catch (error) {
       if (!controller.signal.aborted) {
         appendMessage("allay", allayFallbackMessage(error, fallback), "error");
@@ -535,6 +577,33 @@ export function AllayCompanion({
         setBusyChat(false);
       }
     }
+  }
+
+  function stageToolProposal(proposal: AllayToolProposal) {
+    setPendingSelection(null);
+
+    if (proposal.tool === "create_server") {
+      setPendingConfirmation(null);
+      setPendingCreate(createIntentFromTool(proposal.arguments));
+      return;
+    }
+
+    setPendingCreate(null);
+    const server = availableServers.find(
+      (candidate) => candidate.id === proposal.arguments.server_id,
+    );
+    if (!server) {
+      appendMessage(
+        "allay",
+        "I couldn’t match that proposed action to one of your current workloads, so nothing will run.",
+        "error",
+      );
+      return;
+    }
+    if (!validatePowerAction(server, proposal.arguments.action)) return;
+
+    setActiveServerId(server.id);
+    setPendingConfirmation({ action: proposal.arguments.action, serverId: server.id });
   }
 
   function respond(value: string) {
@@ -853,6 +922,10 @@ export function AllayCompanion({
               <button aria-label="Send command" disabled={!draft.trim() || busy} type="submit">
                 <Send aria-hidden="true" size={17} />
               </button>
+              <p className="allay-minecraft-notice">
+                Not an official Minecraft service. Not approved by or associated with Mojang or
+                Microsoft.
+              </p>
             </form>
           </motion.section>
         ) : null}
