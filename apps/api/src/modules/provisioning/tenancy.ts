@@ -94,10 +94,13 @@ async function ensureNamespace(
 }
 
 function buildResourceQuota(namespace: string, quota: TenantQuotaMirror): k8s.V1ResourceQuota {
-  // Double CPU/RAM/PVC so a candidate can exist during deploy (headroom).
-  const cpu = `${Number.parseFloat(quota.cpuLimit) * 2}`;
-  const memoryGi = Math.ceil((quota.ramLimitMb * 2 * 1.5) / 1024);
-  const storage = quota.storageLimitGb * 2;
+  // Every server may briefly have both an active and candidate workload during
+  // deployment. Mirror the per-server plan limits across every allowed server,
+  // including that rollout headroom.
+  const rolloutSlots = Math.max(quota.serversLimit, 1) * 2;
+  const cpu = `${Number.parseFloat(quota.cpuLimit) * rolloutSlots}`;
+  const memoryMi = Math.ceil(quota.ramLimitMb * rolloutSlots * 1.5);
+  const storage = quota.storageLimitGb * rolloutSlots;
   const pods = Math.max(quota.serversLimit * 6, 8);
 
   return {
@@ -107,8 +110,8 @@ function buildResourceQuota(namespace: string, quota: TenantQuotaMirror): k8s.V1
         pods: String(pods),
         "requests.cpu": cpu,
         "limits.cpu": cpu,
-        "requests.memory": `${memoryGi}Gi`,
-        "limits.memory": `${memoryGi}Gi`,
+        "requests.memory": `${memoryMi}Mi`,
+        "limits.memory": `${memoryMi}Mi`,
         "requests.storage": `${storage}Gi`,
         persistentvolumeclaims: String(Math.max(quota.serversLimit * 3, 4)),
       },
@@ -116,20 +119,27 @@ function buildResourceQuota(namespace: string, quota: TenantQuotaMirror): k8s.V1
   };
 }
 
-function buildLimitRange(namespace: string): k8s.V1LimitRange {
+function buildLimitRange(namespace: string, quota: TenantQuotaMirror): k8s.V1LimitRange {
+  const cpuMax = Number.parseFloat(quota.cpuLimit);
   return {
     metadata: { name: "tenant-limits", namespace },
     spec: {
       limits: [
         {
           type: "Container",
-          defaultRequest: { cpu: "250m", memory: "256Mi" },
-          default: { cpu: "1", memory: "1280Mi" },
-          max: { cpu: "2", memory: "4Gi" },
+          defaultRequest: {
+            cpu: String(Math.min(cpuMax, 0.25)),
+            memory: `${Math.min(quota.ramLimitMb, 256)}Mi`,
+          },
+          default: {
+            cpu: String(Math.min(cpuMax, 1)),
+            memory: `${Math.min(quota.ramLimitMb, 1280)}Mi`,
+          },
+          max: { cpu: quota.cpuLimit, memory: `${quota.ramLimitMb}Mi` },
         } as k8s.V1LimitRangeItem,
         {
           type: "PersistentVolumeClaim",
-          max: { storage: "20Gi" },
+          max: { storage: `${quota.storageLimitGb}Gi` },
         },
       ],
     },
@@ -168,6 +178,11 @@ async function upsertQuota(
     await core.createNamespacedResourceQuota({ namespace, body });
   } catch (error) {
     if (!alreadyExists(error)) throw error;
+    const current = await core.readNamespacedResourceQuota({ name: "tenant-quota", namespace });
+    body.metadata = {
+      ...body.metadata,
+      resourceVersion: current.metadata?.resourceVersion,
+    };
     await core.replaceNamespacedResourceQuota({
       name: "tenant-quota",
       namespace,
@@ -176,15 +191,22 @@ async function upsertQuota(
   }
 }
 
-async function ensureLimitRange(core: k8s.CoreV1Api, namespace: string): Promise<void> {
-  const body = buildLimitRange(namespace);
+async function upsertLimitRange(
+  core: k8s.CoreV1Api,
+  namespace: string,
+  quota: TenantQuotaMirror,
+): Promise<void> {
+  const body = buildLimitRange(namespace, quota);
   try {
     await core.createNamespacedLimitRange({ namespace, body });
   } catch (error) {
-    if (!alreadyExists(error) && !notFound(error)) {
-      // Some clusters reject LimitRange create as 409; ignore exists.
-      if (getKubernetesStatusCode(error) !== 409) throw error;
-    }
+    if (!alreadyExists(error) && getKubernetesStatusCode(error) !== 409) throw error;
+    const current = await core.readNamespacedLimitRange({ name: "tenant-limits", namespace });
+    body.metadata = {
+      ...body.metadata,
+      resourceVersion: current.metadata?.resourceVersion,
+    };
+    await core.replaceNamespacedLimitRange({ name: "tenant-limits", namespace, body });
   }
 }
 
@@ -335,7 +357,7 @@ export async function ensureTenantNamespace(
 
   await ensureNamespace(clients.core, namespace, userId);
   await upsertQuota(clients.core, namespace, quota);
-  await ensureLimitRange(clients.core, namespace);
+  await upsertLimitRange(clients.core, namespace, quota);
   await ensureDefaultDeny(clients.networking, namespace);
   await ensureRconSecret(clients.core, namespace);
   await copyVelocitySecret(clients.core, namespace);

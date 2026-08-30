@@ -3,7 +3,7 @@ import { gameServers, serverConfigs, serverK8s, serverRoutes, userQuotas } from 
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { status } from "elysia";
 import { db, type TransactionType } from "../../db";
-import { deleteGameServer, provisionGameServer } from "../provisioning";
+import { deleteGameServer, ensureTenantNamespace, provisionGameServer } from "../provisioning";
 import { makeKubernetesClients, waitForDeploymentReplicasReady } from "../provisioning/kubernetes";
 import { calculateContainerMemory } from "../provisioning/utils";
 import { QuotaService } from "../quota/quota.service";
@@ -550,6 +550,13 @@ export abstract class ServerService {
         403,
         `Storage limit exceeded. Your plan allows ${quotaRow.storageLimitGb}GB per server.`,
       );
+    }
+
+    // Billing webhooks update the database quota immediately. Reconcile the
+    // tenant ResourceQuota before resizing an existing workload so Kubernetes
+    // enforces the same plan limits as the API.
+    if (data.cpuCores !== undefined || data.ramMb !== undefined) {
+      await ensureTenantNamespace(userId);
     }
 
     await db

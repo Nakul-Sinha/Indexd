@@ -14,6 +14,20 @@ export type SubscriptionEntitlement = {
   status: string;
 };
 
+export function latestWebhookTimestamp(existing: Date | undefined, incoming: Date): Date {
+  if (!existing || incoming > existing) return incoming;
+  return existing;
+}
+
+export function isDefinitiveCheckoutFailure(status: number | undefined): boolean {
+  return (
+    typeof status === "number" &&
+    status >= 400 &&
+    status < 500 &&
+    ![408, 409, 425, 429].includes(status)
+  );
+}
+
 export function highestEntitledPlan(subscriptions: SubscriptionEntitlement[]): BillingPlan {
   let selected: BillingPlan = "starter";
   for (const subscription of subscriptions) {

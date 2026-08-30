@@ -1,6 +1,7 @@
 import "./load-env";
 import type { Elysia } from "elysia";
 import { app } from "./app";
+import { BillingService } from "./modules/billing/service";
 import { type RollupStore, telemetryPlugin } from "./modules/telemetry/index.ts";
 
 export { app };
@@ -16,5 +17,15 @@ export function registerTelemetry<T extends Elysia>(instance: T, store: RollupSt
 }
 
 app.listen(process.env.PORT || 3001);
+
+void BillingService.reconcileAllEntitlements()
+  .then((result) => {
+    if (result.enabled) {
+      console.info(`[billing] Reconciled ${result.reconciled} account entitlement(s)`);
+    }
+  })
+  .catch((error) => {
+    console.error("[billing] Startup entitlement reconciliation failed", error);
+  });
 
 console.log(`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
