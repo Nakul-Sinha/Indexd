@@ -14,6 +14,13 @@ import {
 } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+  type AllayChatTurn,
+  allayFallbackMessage,
+  appendAllayExchange,
+  askAllay,
+  shouldUseAllayModel,
+} from "@/lib/allay-chat";
+import {
   type AllayCreateIntent,
   type AllayIntent,
   type AllayPowerAction,
@@ -174,11 +181,14 @@ export function AllayCompanion({
     serverId: string;
   } | null>(null);
   const [busyCreate, setBusyCreate] = useState<AllayCreateIntent | null>(null);
+  const [busyChat, setBusyChat] = useState(false);
+  const [allayHistory, setAllayHistory] = useState<AllayChatTurn[]>([]);
   const messageId = useRef(2);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLInputElement>(null);
   const confirmationButtonRef = useRef<HTMLButtonElement>(null);
   const petButtonRef = useRef<HTMLButtonElement>(null);
+  const chatRequestRef = useRef<AbortController | null>(null);
   const wasBusy = useRef(false);
 
   const availableServers = servers ?? [];
@@ -198,7 +208,8 @@ export function AllayCompanion({
     Number(Boolean(pendingSelection)) +
     Number(Boolean(pendingConfirmation)) +
     Number(Boolean(pendingCreate)) +
-    Number(busy);
+    Number(busy) +
+    Number(busyChat);
 
   const quickCommands = useMemo(() => {
     const commands: Array<{ label: string; prompt: string; icon: typeof Server }> = [];
@@ -261,17 +272,32 @@ export function AllayCompanion({
     window.requestAnimationFrame(() => confirmationButtonRef.current?.focus());
   }, [pendingConfirmation, pendingCreate]);
 
+  useEffect(
+    () => () => {
+      chatRequestRef.current?.abort();
+    },
+    [],
+  );
+
   function appendMessage(from: AllayMessage["from"], text: string, tone?: AllayMessage["tone"]) {
     setMessages((items) => [...items, { id: messageId.current++, from, text, tone }]);
   }
 
+  function cancelChatRequest() {
+    chatRequestRef.current?.abort();
+    chatRequestRef.current = null;
+    setBusyChat(false);
+  }
+
   function closeChat() {
+    cancelChatRequest();
     setOpen(false);
     window.requestAnimationFrame(() => petButtonRef.current?.focus());
   }
 
   function toggleChat() {
     const nextOpen = !open;
+    if (!nextOpen) cancelChatRequest();
     setOpen((value) => !value);
     window.requestAnimationFrame(() => {
       if (nextOpen) composerRef.current?.focus();
@@ -488,6 +514,29 @@ export function AllayCompanion({
     targetIntent(intent, server);
   }
 
+  async function talkToAllay(value: string, fallback: string) {
+    chatRequestRef.current?.abort();
+    const controller = new AbortController();
+    chatRequestRef.current = controller;
+    setBusyChat(true);
+
+    try {
+      const reply = await askAllay(value, allayHistory, controller.signal);
+      if (controller.signal.aborted) return;
+      appendMessage("allay", reply);
+      setAllayHistory((history) => appendAllayExchange(history, value, reply));
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        appendMessage("allay", allayFallbackMessage(error, fallback), "error");
+      }
+    } finally {
+      if (chatRequestRef.current === controller) {
+        chatRequestRef.current = null;
+        setBusyChat(false);
+      }
+    }
+  }
+
   function respond(value: string) {
     const confirmationReply = classifyConfirmationReply(value);
 
@@ -552,15 +601,14 @@ export function AllayCompanion({
     }
 
     const intent = parsedIntent ?? parseAllayIntent(value);
-    if (intent.kind === "greeting") {
-      appendMessage("allay", `Hi ${operatorName}. Tell me what you want to create or manage.`);
-      return;
-    }
-    if (intent.kind === "help") {
-      appendMessage(
-        "allay",
-        "I can create Minecraft Paper or Vanilla realms, list them, report state, start, stop, restart, and copy a join address. Try “create a Paper server named survival” or “restart Creative”.",
-      );
+    if (shouldUseAllayModel(intent)) {
+      const fallback =
+        intent.kind === "greeting"
+          ? `Hi ${operatorName}. Tell me what you want to create or manage.`
+          : intent.kind === "help"
+            ? "I can create Minecraft Paper or Vanilla realms, list them, report state, start, stop, restart, and copy a join address. Try “create a Paper server named survival” or “restart Creative”."
+            : "I didn’t catch a realm command there. Ask me to create a Paper or Vanilla realm, or to list, inspect, start, stop, restart, or copy a join address.";
+      void talkToAllay(value, fallback);
       return;
     }
     if (intent.kind === "create") {
@@ -591,16 +639,12 @@ export function AllayCompanion({
       resolveTarget(intent, value);
       return;
     }
-
-    appendMessage(
-      "allay",
-      "I didn’t catch a realm command there. Ask me to create a Paper or Vanilla realm, or to list, inspect, start, stop, restart, or copy a join address.",
-    );
   }
 
   function submit(value: string) {
     const message = value.trim();
     if (!message || busy) return;
+    cancelChatRequest();
     appendMessage("operator", message);
     setDraft("");
     respond(message);
@@ -668,7 +712,10 @@ export function AllayCompanion({
           >
             <header className="allay-chat-header">
               <div>
-                <span className="allay-chat-title">Allay</span>
+                <span className="allay-title-row">
+                  <span className="allay-chat-title">Allay</span>
+                  <span className="allay-model">Luna · low</span>
+                </span>
                 <span className={`allay-connection ${connectorState}`}>
                   <span aria-hidden="true" /> {connectionLabel}
                 </span>
@@ -765,6 +812,13 @@ export function AllayCompanion({
                   Creating {busyCreate.body.name}…
                 </div>
               ) : null}
+
+              {busyChat ? (
+                <div className="allay-working" role="status">
+                  <RefreshCw aria-hidden="true" size={15} />
+                  Allay is thinking with Luna…
+                </div>
+              ) : null}
             </div>
 
             <fieldset className="allay-quick-actions">
@@ -788,9 +842,11 @@ export function AllayCompanion({
                 maxLength={180}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={
-                  busy
-                    ? "Waiting for the control plane…"
-                    : "Try “create a Paper server named survival”"
+                  busyChat
+                    ? "Send another message to interrupt Luna…"
+                    : busy
+                      ? "Waiting for the control plane…"
+                      : "Try “create a Paper server named survival”"
                 }
                 value={draft}
               />

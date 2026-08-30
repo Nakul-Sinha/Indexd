@@ -708,6 +708,26 @@ a {
   line-height: 1;
 }
 
+.allay-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.48rem;
+}
+
+.allay-model {
+  padding: 0.12rem 0.32rem;
+  color: #d8f7ff;
+  background: oklch(0.43 0.07 218 / 0.74);
+  border: 1px solid oklch(0.76 0.08 211 / 0.52);
+  font-family: "Monocraft", ui-monospace, monospace;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .allay-connection {
   display: flex;
   align-items: center;
