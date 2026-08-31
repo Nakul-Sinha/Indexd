@@ -7,6 +7,7 @@ import { adminModule } from "./modules/admin";
 import { allayModule } from "./modules/allay";
 import { AuthService } from "./modules/auth/service";
 import { BackupModule } from "./modules/backup";
+import { billingModule, billingWebhookModule } from "./modules/billing";
 import { deployModule } from "./modules/deploy/http";
 import { quotaModule } from "./modules/quota";
 import { rulesModule } from "./modules/rules";
@@ -33,6 +34,8 @@ export const app = new Elysia()
     return { status: "ok", db: row?.db, now: row?.now };
   })
 
+  .use(billingWebhookModule)
+  .use(billingModule)
   .use(rulesModule)
   .use(serversModule)
   .use(allayModule)

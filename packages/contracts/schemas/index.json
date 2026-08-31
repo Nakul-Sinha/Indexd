@@ -2695,5 +2695,374 @@
         "type": "string"
       }
     }
+  },
+  "BillingPlan": {
+    "anyOf": [
+      {
+        "const": "starter",
+        "type": "string"
+      },
+      {
+        "const": "standard",
+        "type": "string"
+      },
+      {
+        "const": "pro",
+        "type": "string"
+      }
+    ]
+  },
+  "PaidBillingPlan": {
+    "anyOf": [
+      {
+        "const": "standard",
+        "type": "string"
+      },
+      {
+        "const": "pro",
+        "type": "string"
+      }
+    ]
+  },
+  "BillingLimits": {
+    "type": "object",
+    "required": [
+      "servers",
+      "ram_mb",
+      "cpu_cores",
+      "storage_gb",
+      "backups"
+    ],
+    "properties": {
+      "servers": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "ram_mb": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "cpu_cores": {
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "storage_gb": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "backups": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    }
+  },
+  "BillingPlanSummary": {
+    "type": "object",
+    "required": [
+      "plan",
+      "configured",
+      "limits"
+    ],
+    "properties": {
+      "plan": {
+        "anyOf": [
+          {
+            "const": "starter",
+            "type": "string"
+          },
+          {
+            "const": "standard",
+            "type": "string"
+          },
+          {
+            "const": "pro",
+            "type": "string"
+          }
+        ]
+      },
+      "configured": {
+        "type": "boolean"
+      },
+      "limits": {
+        "type": "object",
+        "required": [
+          "servers",
+          "ram_mb",
+          "cpu_cores",
+          "storage_gb",
+          "backups"
+        ],
+        "properties": {
+          "servers": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "ram_mb": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "cpu_cores": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "storage_gb": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "backups": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "BillingSubscriptionSummary": {
+    "type": "object",
+    "required": [
+      "plan",
+      "status",
+      "cancel_at_next_billing_date",
+      "next_billing_date"
+    ],
+    "properties": {
+      "plan": {
+        "anyOf": [
+          {
+            "const": "standard",
+            "type": "string"
+          },
+          {
+            "const": "pro",
+            "type": "string"
+          }
+        ]
+      },
+      "status": {
+        "type": "string"
+      },
+      "cancel_at_next_billing_date": {
+        "type": "boolean"
+      },
+      "next_billing_date": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "BillingSummaryResponse": {
+    "type": "object",
+    "required": [
+      "provider",
+      "enabled",
+      "current_plan",
+      "plans",
+      "subscription",
+      "can_manage_billing"
+    ],
+    "properties": {
+      "provider": {
+        "const": "dodo_payments",
+        "type": "string"
+      },
+      "enabled": {
+        "type": "boolean"
+      },
+      "current_plan": {
+        "anyOf": [
+          {
+            "const": "starter",
+            "type": "string"
+          },
+          {
+            "const": "standard",
+            "type": "string"
+          },
+          {
+            "const": "pro",
+            "type": "string"
+          }
+        ]
+      },
+      "plans": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "plan",
+            "configured",
+            "limits"
+          ],
+          "properties": {
+            "plan": {
+              "anyOf": [
+                {
+                  "const": "starter",
+                  "type": "string"
+                },
+                {
+                  "const": "standard",
+                  "type": "string"
+                },
+                {
+                  "const": "pro",
+                  "type": "string"
+                }
+              ]
+            },
+            "configured": {
+              "type": "boolean"
+            },
+            "limits": {
+              "type": "object",
+              "required": [
+                "servers",
+                "ram_mb",
+                "cpu_cores",
+                "storage_gb",
+                "backups"
+              ],
+              "properties": {
+                "servers": {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "ram_mb": {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "cpu_cores": {
+                  "exclusiveMinimum": 0,
+                  "type": "number"
+                },
+                "storage_gb": {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "backups": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "subscription": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "plan",
+              "status",
+              "cancel_at_next_billing_date",
+              "next_billing_date"
+            ],
+            "properties": {
+              "plan": {
+                "anyOf": [
+                  {
+                    "const": "standard",
+                    "type": "string"
+                  },
+                  {
+                    "const": "pro",
+                    "type": "string"
+                  }
+                ]
+              },
+              "status": {
+                "type": "string"
+              },
+              "cancel_at_next_billing_date": {
+                "type": "boolean"
+              },
+              "next_billing_date": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "can_manage_billing": {
+        "type": "boolean"
+      }
+    }
+  },
+  "BillingCheckoutRequest": {
+    "type": "object",
+    "required": [
+      "plan",
+      "request_key"
+    ],
+    "properties": {
+      "plan": {
+        "anyOf": [
+          {
+            "const": "standard",
+            "type": "string"
+          },
+          {
+            "const": "pro",
+            "type": "string"
+          }
+        ]
+      },
+      "request_key": {
+        "minLength": 16,
+        "maxLength": 128,
+        "type": "string"
+      }
+    }
+  },
+  "BillingCheckoutResponse": {
+    "type": "object",
+    "required": [
+      "checkout_url",
+      "session_id",
+      "reused"
+    ],
+    "properties": {
+      "checkout_url": {
+        "format": "uri",
+        "type": "string"
+      },
+      "session_id": {
+        "type": "string"
+      },
+      "reused": {
+        "type": "boolean"
+      }
+    }
+  },
+  "BillingPortalResponse": {
+    "type": "object",
+    "required": [
+      "portal_url"
+    ],
+    "properties": {
+      "portal_url": {
+        "format": "uri",
+        "type": "string"
+      }
+    }
   }
 }

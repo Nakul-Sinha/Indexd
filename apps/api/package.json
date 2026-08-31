@@ -19,6 +19,7 @@
     "@farlands/plugin-builder": "workspace:*",
     "@kubernetes/client-node": "^1.4.0",
     "@repo/db": "workspace:*",
+    "dodopayments": "^2.48.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "elysia": "^1.4.30",

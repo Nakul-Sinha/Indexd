@@ -13,6 +13,7 @@
  */
 
 export * from "./api.ts";
+export * from "./billing.ts";
 export * from "./common.ts";
 export * from "./deployment.ts";
 export * from "./digest.ts";

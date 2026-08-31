@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./backups";
+export * from "./billing";
 export * from "./enums";
 export * from "./extensions";
 export * from "./jobs";
